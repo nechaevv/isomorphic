@@ -1,8 +1,7 @@
-package io.icostack.ui
+package com.github.nechaevv
 
 import org.scalajs.dom
 import dom.document
-import scalatags.JsDom.all._
 
 object Main {
   def main(args: Array[String]): Unit = {
