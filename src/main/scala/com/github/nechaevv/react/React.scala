@@ -6,5 +6,6 @@ import scala.scalajs.js.annotation.JSGlobal
 @js.native
 @JSGlobal
 object React extends js.Object {
-  def createElement(tagType: String, attributes: js.Object, children: Element*): Element = js.native
+  def createElement(element: js.Any, attributes: js.Object, children: js.Any*): Element = js.native
+  val Fragment: js.Any = js.native
 }

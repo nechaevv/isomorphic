@@ -1,5 +1,8 @@
 package com.github.nechaevv.react
 
-class Element {
+import scala.scalajs.js
+
+@js.native
+class Element extends js.Object {
 
 }
