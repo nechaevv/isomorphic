@@ -1,12 +1,10 @@
 package com.github.nechaevv.dom
 
 import com.github.nechaevv.core.Renderer
-import org.scalajs.dom.raw.{DocumentFragment, Node}
+import org.scalajs.dom.raw.Node
 import org.scalajs.dom.document
 
-object DomRenderer extends Renderer {
-  override type Element = Node
-  override type Fragment = DocumentFragment
+object DomRenderer extends Renderer[Node] {
 
   override def element(name: String, attributes: Map[String, String], children: Node*): Node = {
     val node = document.createElement(name)
@@ -15,7 +13,7 @@ object DomRenderer extends Renderer {
     node
   }
 
-  override def fragment(contents: Node*): DocumentFragment = {
+  override def fragment(contents: Node*): Node = {
     val fragment = document.createDocumentFragment()
     for (child ← contents) fragment.appendChild(child)
     fragment

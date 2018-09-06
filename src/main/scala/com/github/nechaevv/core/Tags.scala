@@ -1,14 +1,18 @@
 package com.github.nechaevv.core
 
-class Tags {
-  type Tag[E,F] = (Map[String, String], Seq[E]) ⇒ Renderer[E,F] ⇒ E
+object Tags {
+  type Tag[E] = Renderer[E] ⇒ (Map[String, String], Seq[E]) ⇒ E
 
-  def tag[E,F](name: String)(attributes: Map[String, String], children: E*)(renderer: Renderer[E,F]): E = {
+  def tag[E](name: String): Tag[E] = { renderer: Renderer[E] ⇒ { (attributes: Map[String, String], children: Seq[E]) ⇒
     renderer.element(name, attributes, children:_*)
-  }
+  } }
 
-  def div[E,F]: Tag[E,F] = tag("div")
-  def h1[E,F]: Tag[E,F] = tag("h1")
-  def h2[E,F]: Tag[E,F] = tag("h2")
+  def div[E]: Tag[E] = tag("div")
+  def h1[E]: Tag[E] = tag("h1")
+  def h2[E]: Tag[E] = tag("h2")
+  def ul[E]: Tag[E] = tag("ul")
+  def li[E]: Tag[E] = tag("li")
+  def form[E]: Tag[E] = tag("form")
+  def input[E]: Tag[E] = tag("input")
 
 }

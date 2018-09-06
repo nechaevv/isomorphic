@@ -1,18 +1,20 @@
 package com.github.nechaevv
 
+import com.github.nechaevv.dom.DomRenderer
 import com.github.nechaevv.react.{ReactDOM, ReactRenderer}
 import org.scalajs.dom.document
-import com.github.nechaevv.react.ReactRenderer._
-import com.github.nechaevv.core.Tags._
+import com.github.nechaevv.tasks.{AppComponent, Task, TasksState}
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val component = h1(Map("class"→"hello-world"), Seq(
-      text("Hello, world!")
-    ))
-    val container = document.getElementById("Container")
+    val state = TasksState(Seq(Task("Task 1", true), Task("Task 2", false)), Task("Task name", false))
+    val reactComponent = AppComponent()(ReactRenderer)
+    val reactContainer = document.getElementById("ReactContainer")
+    ReactDOM.render(reactComponent(state), reactContainer)
 
-    ReactDOM.render(component(ReactRenderer), container)
+    val domComponent = AppComponent()(DomRenderer)
+    val domContainer = document.getElementById("DomContainer")
+    domContainer.appendChild(domComponent(state))
 
   }
 }

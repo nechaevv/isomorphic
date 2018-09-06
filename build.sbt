@@ -15,3 +15,5 @@ libraryDependencies ++= Seq(
 )
 
 scalaJSUseMainModuleInitializer := true
+
+scalacOptions += "-P:scalajs:sjsDefinedByDefault"

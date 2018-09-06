@@ -6,13 +6,13 @@ import scala.scalajs.js.Dynamic.global
 object CachingComponent {
   private val componentCache = js.Dynamic.newInstance(global.WeakMap)()
 
-  def apply[S, R <: Renderer](component: Component[S, R]): Component[S, R] = { state: S ⇒ renderer: R ⇒
+  def apply[E, S](component: Component[E, S]): Component[E, S] = { renderer: Renderer[E] ⇒ state: S ⇒
     val cachedValue = componentCache.get(state.asInstanceOf[js.Any])
     if (js.isUndefined(cachedValue)) {
-      val newValue = component(state)(renderer)
+      val newValue = component(renderer)(state)
       componentCache.set(newValue.asInstanceOf[js.Any])
       newValue
-    } else cachedValue.asInstanceOf[R#Element]
+    } else cachedValue.asInstanceOf[E]
   }
 
 }

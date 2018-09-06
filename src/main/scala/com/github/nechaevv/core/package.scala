@@ -1,5 +1,5 @@
 package com.github.nechaevv
 
 package object core {
-  type Component[S, R <: Renderer] = S ⇒ R#Element
+  type Component[E, S] = Renderer[E] ⇒ S ⇒ E
 }
