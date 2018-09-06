@@ -8,5 +8,5 @@ import scala.scalajs.js.annotation.JSGlobal
 @js.native
 @JSGlobal
 object ReactDOM extends js.Object {
-  def render(element: Element, container: dom.Element): Unit = js.native
+  def render(element: ReactElement, container: dom.Element): Unit = js.native
 }

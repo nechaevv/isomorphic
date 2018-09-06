@@ -1,19 +1,18 @@
 package com.github.nechaevv
 
-import com.github.nechaevv.react.ReactDOM
-import org.scalajs.dom
-import dom.document
-import react.Tags._
+import com.github.nechaevv.react.{ReactDOM, ReactRenderer}
+import org.scalajs.dom.document
 import com.github.nechaevv.react.ReactRenderer._
+import com.github.nechaevv.core.Tags._
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val content = h1(Map.empty, Seq(
+    val component = h1(Map("class"→"hello-world"), Seq(
       text("Hello, world!")
     ))
     val container = document.getElementById("Container")
 
-    ReactDOM.render(content, container)
+    ReactDOM.render(component(ReactRenderer), container)
 
   }
 }

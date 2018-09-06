@@ -1,13 +1,14 @@
 package com.github.nechaevv.core
 
-class Tags[T](renderer: Renderer[T]) {
-  type HtmlTag = (Map[String, String], Seq[T]) ⇒ T
+class Tags {
+  type Tag[E,F] = (Map[String, String], Seq[E]) ⇒ Renderer[E,F] ⇒ E
 
-  def htmlTag(name: String)(attributes: Map[String, String], children: T*): T = {
-    renderer.element(name, attributes, children)
+  def tag[E,F](name: String)(attributes: Map[String, String], children: E*)(renderer: Renderer[E,F]): E = {
+    renderer.element(name, attributes, children:_*)
   }
 
-  val h1: HtmlTag = htmlTag("h1")
-  val h2: HtmlTag = htmlTag("h2")
+  def div[E,F]: Tag[E,F] = tag("div")
+  def h1[E,F]: Tag[E,F] = tag("h1")
+  def h2[E,F]: Tag[E,F] = tag("h2")
 
 }
