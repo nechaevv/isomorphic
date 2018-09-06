@@ -8,13 +8,13 @@ import com.github.nechaevv.tasks.{AppComponent, Task, TasksState}
 object Main {
   def main(args: Array[String]): Unit = {
     val state = TasksState(Seq(Task("Task 1", true), Task("Task 2", false)), Task("Task name", false))
-    val reactComponent = AppComponent()(ReactRenderer)
+    val reactComponent = AppComponent(state)(ReactRenderer)
     val reactContainer = document.getElementById("ReactContainer")
-    ReactDOM.render(reactComponent(state), reactContainer)
+    ReactDOM.render(reactComponent, reactContainer)
 
-    val domComponent = AppComponent()(DomRenderer)
+    val domComponent = AppComponent(state)(DomRenderer)
     val domContainer = document.getElementById("DomContainer")
-    domContainer.appendChild(domComponent(state))
+    domContainer.appendChild(domComponent)
 
   }
 }

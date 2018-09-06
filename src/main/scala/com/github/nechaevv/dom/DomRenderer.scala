@@ -2,11 +2,11 @@ package com.github.nechaevv.dom
 
 import com.github.nechaevv.core.Renderer
 import org.scalajs.dom.raw.Node
-import org.scalajs.dom.document
+import org.scalajs.dom.{Event, document}
 
 object DomRenderer extends Renderer[Node] {
 
-  override def element(name: String, attributes: Map[String, String], children: Node*): Node = {
+  override def element(name: String, attributes: Map[String, String], events: Map[String, Event ⇒ Unit], children: Node*): Node = {
     val node = document.createElement(name)
     for ((n, v) ← attributes) node.setAttribute(n, v)
     for (child ← children) node.appendChild(child)
