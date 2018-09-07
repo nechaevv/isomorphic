@@ -1,7 +1,7 @@
 package com.github.nechaevv.tasks
 
 import com.github.nechaevv.core.{Component, Element, Renderer}
-import com.github.nechaevv.core.Dsl._
+import com.github.nechaevv.core.dsl._
 
 object TaskListComponent extends Component[Seq[Task]] {
  def apply(tasks: Seq[Task]): Element = {

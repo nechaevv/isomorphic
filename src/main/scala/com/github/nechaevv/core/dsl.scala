@@ -4,7 +4,7 @@ import org.scalajs.dom.Event
 
 import scala.language.implicitConversions
 
-object Dsl {
+object dsl {
 
   trait ElementModifier
   case class Attribute(name: String, value: String) extends ElementModifier
@@ -41,6 +41,7 @@ object Dsl {
 
   implicit class PimpedString(s: String) {
     def :=(value: String) : Attribute = Attribute(s, value)
+    def :?(value: Boolean) : MultiModifier = MultiModifier(if (value) Seq(Attribute(s, s)) else Seq.empty[Attribute])
   }
 
   implicit class PimpedEventType(eventType: EventType) {
@@ -51,7 +52,8 @@ object Dsl {
   implicit def childTextModifier(text: String): ChildElement = ChildElement(new Element {
     override def apply[E](renderer: Renderer[E]): E = renderer.text(text)
   })
-  implicit def elementSeqImplicit(elems: Seq[Element]): MultiModifier = MultiModifier(elems.map(ChildElement))
+  implicit def modifierIterableImplicit[T](mods: Iterable[T])(implicit conv: T ⇒ ElementModifier): MultiModifier = MultiModifier(mods.map(conv))
+  implicit def modifierOptionImplicit[T](mod: Option[T])(implicit conv: T ⇒ ElementModifier): MultiModifier = MultiModifier(mod.map(conv))
 
   def div = new Tag("div")
   def h1 = new Tag("h1")
