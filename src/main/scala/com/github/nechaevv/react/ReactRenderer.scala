@@ -1,6 +1,6 @@
 package com.github.nechaevv.react
 
-import com.github.nechaevv.core.Renderer
+import com.github.nechaevv.core._
 import org.scalajs.dom.Event
 
 import scala.scalajs.js
@@ -9,15 +9,11 @@ import scala.scalajs.js.Dictionary
 
 object ReactRenderer extends Renderer[ReactElement] {
 
-  override def element(name: String, attributes: Map[String, String], events: Map[String, Event ⇒ Unit], children: ReactElement*): ReactElement = {
+  override def element(name: String, attributes: Iterable[(String, String)], eventListeners: Iterable[(EventType, Event ⇒ Unit)], childElements: Seq[ReactElement]): ReactElement = {
     val props = Dictionary.empty[js.Any]
-    attributes.foreach {
-      case (k, v) ⇒ props(k) = v
-    }
-    events.foreach {
-      case (k, v ) ⇒ props(k) = v
-    }
-    React.createElement(name, props, children.asInstanceOf[Seq[js.Any]]:_*)
+    for ((n, v) ← attributes) props(n) = v
+    for ((e, h) ← eventListeners) props(eventNames(e)) = h
+    React.createElement(name, props, childElements:_*)
   }
 
   override def fragment(contents: ReactElement*): ReactElement = {
@@ -27,5 +23,10 @@ object ReactRenderer extends Renderer[ReactElement] {
   override def text(content: String): ReactElement = {
     React.createElement(React.Fragment, js.Dictionary(), content)
   }
+
+  import com.github.nechaevv.core.EventTypes._
+  val eventNames = Map(
+    Click → "onClick"
+  )
 
 }

@@ -1,12 +1,14 @@
 package com.github.nechaevv.tasks
 
-import com.github.nechaevv.core.{Component, Renderer}
-import com.github.nechaevv.core.Tags._
+import com.github.nechaevv.core.{Component, Element, Renderer}
+import com.github.nechaevv.core.Dsl._
 
 object TaskListComponent extends Component[Seq[Task]] {
- def apply[E](tasks: Seq[Task])(implicit renderer: Renderer[E]): E = {
-   ul()(
-     tasks.map(task ⇒ li(Map("class" → (if(task.completed) "completed" else "uncompleted")))(renderer.text(task.name))):_*
+ def apply(tasks: Seq[Task]): Element = {
+   ul(
+     for (task ← tasks) yield li(
+       "class" := (if(task.completed) "completed" else "uncompleted"), task.name
+     )
    )
  }
 }

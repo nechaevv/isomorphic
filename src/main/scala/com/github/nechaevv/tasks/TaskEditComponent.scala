@@ -1,16 +1,16 @@
 package com.github.nechaevv.tasks
 
-import com.github.nechaevv.core.{Component, Renderer}
-import com.github.nechaevv.core.Tags._
+import com.github.nechaevv.core.Dsl._
+import com.github.nechaevv.core.{Component, Element, EventTypes}
 import org.scalajs.dom.Event
 
 object TaskEditComponent extends Component[Task] {
-  def apply[E](task: Task)(implicit renderer: Renderer[E]): E = {
+  def apply(task: Task): Element = {
     val onClick: Event ⇒ Unit = e ⇒ System.out.println("clicked! " + e.target.toString)
-    form()(
-      input(Map("type"→"text", "value"→task.name))(),
-      input(Map("type"→"checkbox") ++ (if (task.completed) Seq("checked"→"true") else Seq.empty[(String,String)]))(),
-      button(Map("type"→"button"), Map("onClick" → onClick))(renderer.text("SAVE"))
+    form(
+      input("type" := "text", "value" := task.name),
+      input("type" := "checkbox"), // if (task.completed) Some("checked" := "true") else None),
+      button("type" := "button", EventTypes.Click → onClick, "SAVE")
     )
   }
 }

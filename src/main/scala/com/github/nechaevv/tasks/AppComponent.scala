@@ -1,12 +1,11 @@
 package com.github.nechaevv.tasks
 
-import com.github.nechaevv.core.{Component, Renderer}
-import com.github.nechaevv.core.Tags._
+import com.github.nechaevv.core.{Component, Element, Renderer}
+import com.github.nechaevv.core.Dsl._
 
 object AppComponent extends Component[TasksState] {
-
-  override def apply[E](state: TasksState)(implicit renderer: Renderer[E]): E = {
-    div()(
+  override def apply(state: TasksState): Element = {
+    div(
       TaskListComponent(state.tasks),
       TaskEditComponent(state.editingTask)
     )
