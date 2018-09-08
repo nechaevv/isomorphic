@@ -7,7 +7,7 @@ object DomRenderer extends Renderer[Node] {
   override def element(name: String, attributes: Iterable[(String, String)], eventListeners: Iterable[(EventType, Event ⇒ Unit)], childElements: Seq[Node]): Node = {
     val node = document.createElement(name)
     for ((n, v) ← attributes) node.setAttribute(n, v)
-    for ((e, h) ← eventListeners) node.addEventListener(e.domName, h)
+    for ((e, h) ← eventListeners) node.addEventListener(e.domName, h, e.isCapturing)
     for (e ← childElements) node.appendChild(e)
     node
   }

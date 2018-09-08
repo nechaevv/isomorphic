@@ -1,5 +1,7 @@
 package com.github.nechaevv.core
 
-trait Component[S] {
-  def apply(state: S): Element
+import com.github.nechaevv.pipeline.EventDispatcher
+
+trait Component[S, E] {
+  def apply(state: S, events: EventDispatcher[E]): Element
 }

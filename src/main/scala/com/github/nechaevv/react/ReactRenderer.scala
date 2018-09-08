@@ -26,7 +26,8 @@ object ReactRenderer extends Renderer[ReactElement] {
 
   import com.github.nechaevv.core.EventTypes._
   val eventNames = Map(
-    Click → "onClick"
+    Click → "onClick",
+    Change → "onChange"
   )
 
 }

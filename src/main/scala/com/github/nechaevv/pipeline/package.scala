@@ -1,6 +1,6 @@
 package com.github.nechaevv
 
 package object pipeline {
-  type Reducer[S] = PartialFunction[Event, S ⇒ S]
-  type Effect = PartialFunction[Event, Iterable[Event]]
+  type Reducer[E, S] = PartialFunction[E, S ⇒ S]
+  type Effect[E] = PartialFunction[E, Iterable[E]]
 }

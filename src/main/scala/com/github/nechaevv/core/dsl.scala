@@ -5,6 +5,7 @@ import org.scalajs.dom.Event
 import scala.language.implicitConversions
 
 object dsl {
+  type EventHandler = Event ⇒ Unit
 
   trait ElementModifier
   case class Attribute(name: String, value: String) extends ElementModifier
@@ -14,7 +15,7 @@ object dsl {
 
   class Tag(name: String) {
     type AttributeDef = (String, String)
-    type EventListenerDef = (EventType, Event ⇒ Unit)
+    type EventListenerDef = (EventType, EventHandler)
 
     def apply(modifiers: ElementModifier*): Element = {
 

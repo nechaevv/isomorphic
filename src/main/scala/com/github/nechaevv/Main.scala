@@ -2,20 +2,31 @@ package com.github.nechaevv
 
 import cats.effect._
 import cats.syntax.all._
-import fs2._
-import com.github.nechaevv.dom.DomRenderer
-import com.github.nechaevv.pipeline.Event
+import com.github.nechaevv.pipeline.{QueueEventDispatcher, Reducer}
 import com.github.nechaevv.react.{ReactDOM, ReactRenderer}
+import com.github.nechaevv.tasks._
+import fs2._
+import fs2.concurrent.Queue
 import org.scalajs.dom.document
-import com.github.nechaevv.tasks.{AppComponent, Task, TasksState}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object Main extends IOApp {
 
-  def run(args: Array[String]): IO[ExitCode] = {
-    val state = TasksState(Seq(Task("Task 1", true), Task("Task 2", false)), Task("Task name", false))
+  def run(args: List[String]): IO[ExitCode] = {
+    val reactContainer = document.getElementById("ReactContainer")
+
     val stream = for {
-      eventStream ← Stream.eval(async.topic[IO, Event])
+      eventStream ← Stream.eval(Queue.unbounded[IO, AppEvent])
+      _ ← Stream.eval(eventStream.enqueue1(AppStartEvent))
+      eventDispatcher = new QueueEventDispatcher[AppEvent](eventStream)
+      events = eventStream.dequeue
+      state ← events.scan(initialState)((state, event) ⇒ {
+        val reducer: TasksState ⇒ TasksState = if (stateReducer.isDefinedAt(event)) stateReducer(event) else s ⇒ s
+        reducer(state)
+      })
+      _ ← Stream.eval(IO {
+        val reactComponent = AppComponent(state, eventDispatcher)(ReactRenderer)
+        ReactDOM.render(reactComponent, reactContainer)
+      } )
     } yield ()
     stream.compile.drain.as(ExitCode.Success)
 
