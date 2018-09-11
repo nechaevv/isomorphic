@@ -1,18 +1,23 @@
 package com.github.nechaevv.sjsui.example
 
-import com.github.nechaevv.sjsui.WebComponent
-import org.scalajs.dom.raw.HTMLElement
+import com.github.nechaevv.sjsui.{Reducer, WebComponent}
 
-class TasksApp extends WebComponent {
+object TasksApp extends WebComponent {
+
   override type Event = AppEvent
   override type State = TasksState
   override type Component = AppComponent.type
 
-  override def rootComponent = AppComponent
+  override def useShadowRoot: Boolean = false
 
-  override def initialState = initialTasksState
+  override def tagName: String = "app-tasks"
 
-  override def reducer = stateReducer
+  override def rootComponent: Component = AppComponent
 
-  override def initEvent(element: HTMLElement) = AppStartEvent
+  override def initialState: State = initialTasksState
+
+  override def reducer: Reducer[Event, State] = stateReducer
+
+  override def initEvent(properties: Iterable[(String, String)]): Event = AppStartEvent
+
 }

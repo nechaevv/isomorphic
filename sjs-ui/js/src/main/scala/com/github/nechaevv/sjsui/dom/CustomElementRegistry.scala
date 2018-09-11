@@ -14,7 +14,10 @@ class CustomElementRegistry extends js.Object {
 object CustomElementRegistry {
   val instance: CustomElementRegistry = js.Dynamic.global.window.customElements.asInstanceOf[CustomElementRegistry]
 
-  def register(components: (String, js.Dynamic)*): Unit = components foreach {
-    case (name, constructor) ⇒ instance.define(name, constructor)
+  def register[T <: WebComponent](webComponent: T)(implicit customElementDef: CustomElementDef[T]): Unit = {
+    instance.define(webComponent.tagName, customElementDef.constructor)
   }
+
 }
+
+class CustomElementDef[T <: WebComponent](val constructor: js.Dynamic)

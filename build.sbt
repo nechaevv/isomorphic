@@ -1,3 +1,4 @@
+import org.scalajs.core.tools.linker.backend.OutputMode.{ECMAScript51Global, ECMAScript51Isolated, ECMAScript6}
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 val sharedSettings = Seq(
@@ -31,7 +32,8 @@ lazy val example = project.in(file("example"))
   .settings(sharedSettings ++ Seq(
     name := "example",
     scalaJSUseMainModuleInitializer := true,
-    scalacOptions += "-P:scalajs:sjsDefinedByDefault"
+    scalacOptions += "-P:scalajs:sjsDefinedByDefault",
+    scalaJSOutputMode := ECMAScript6
   ))
   .dependsOn(sjsUI.js)
 

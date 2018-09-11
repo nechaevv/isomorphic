@@ -5,11 +5,11 @@ import cats.syntax.all._
 import com.github.nechaevv.sjsui.react.{ReactDOM, ReactRenderer}
 import fs2._
 import fs2.concurrent.Queue
-import org.scalajs.dom.Element
+import org.scalajs.dom.{Element, Node}
 
 object ReactPipeline {
   def run[AppEvent, AppState, AppComponent <: platform.Component[AppState, AppEvent]]
-    (container: Element, appComponent: AppComponent, stateReducer: Reducer[AppEvent, AppState], initialState: AppState,
+    (container: Node, appComponent: AppComponent, stateReducer: Reducer[AppEvent, AppState], initialState: AppState,
      appStartEvent: AppEvent, eventDispatcherCallback: EventDispatcher[AppEvent] ⇒ Unit)(implicit concurrent: Concurrent[IO]): IO[Unit] = {
     val stream = for {
       eventStream ← Stream.eval(Queue.unbounded[IO, AppEvent])

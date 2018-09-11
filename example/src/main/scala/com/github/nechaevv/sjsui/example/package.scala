@@ -1,5 +1,8 @@
 package com.github.nechaevv.sjsui
 
+import scala.scalajs.js
+import com.github.nechaevv.sjsui.dom.{CustomElement, CustomElementDef}
+
 package object example {
   val initialTasksState = TasksState(
     tasks = Seq(
@@ -24,4 +27,7 @@ package object example {
         editingIndex = None
       )
   }
+
+  implicit val tasksAppElementDef = new CustomElementDef[TasksApp.type](js.constructorOf[TasksAppCustomElement])
+  class TasksAppCustomElement extends CustomElement(TasksApp)
 }
