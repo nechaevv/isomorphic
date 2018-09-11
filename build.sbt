@@ -30,7 +30,8 @@ lazy val example = project.in(file("example"))
   .enablePlugins(ScalaJSPlugin)
   .settings(sharedSettings ++ Seq(
     name := "example",
-    scalaJSUseMainModuleInitializer := true
+    scalaJSUseMainModuleInitializer := true,
+    scalacOptions += "-P:scalajs:sjsDefinedByDefault"
   ))
   .dependsOn(sjsUI.js)
 

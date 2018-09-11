@@ -7,7 +7,7 @@ import fs2._
 import fs2.concurrent.Queue
 import org.scalajs.dom.Element
 
-object ReactApp {
+object ReactPipeline {
   def run[AppEvent, AppState, AppComponent <: platform.Component[AppState, AppEvent]]
     (container: Element, appComponent: AppComponent, stateReducer: Reducer[AppEvent, AppState], initialState: AppState,
      appStartEvent: AppEvent)(implicit concurrent: Concurrent[IO]): IO[Unit] = {

@@ -1,7 +1,7 @@
 package com.github.nechaevv.sjsui
 
 package object example {
-  val initialState = TasksState(
+  val initialTasksState = TasksState(
     tasks = Seq(
       Task("Task 1", true),
       Task("Task 2", false)
