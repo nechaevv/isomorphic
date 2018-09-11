@@ -10,11 +10,15 @@ import org.scalajs.dom.Element
 object ReactPipeline {
   def run[AppEvent, AppState, AppComponent <: platform.Component[AppState, AppEvent]]
     (container: Element, appComponent: AppComponent, stateReducer: Reducer[AppEvent, AppState], initialState: AppState,
-     appStartEvent: AppEvent)(implicit concurrent: Concurrent[IO]): IO[Unit] = {
+     appStartEvent: AppEvent, eventDispatcherCallback: EventDispatcher[AppEvent] ⇒ Unit)(implicit concurrent: Concurrent[IO]): IO[Unit] = {
     val stream = for {
       eventStream ← Stream.eval(Queue.unbounded[IO, AppEvent])
       _ ← Stream.eval(eventStream.enqueue1(appStartEvent))
-      eventDispatcher = new QueueEventDispatcher[AppEvent](eventStream)
+      eventDispatcher = {
+        val dispatcher = new QueueEventDispatcher[AppEvent](eventStream)
+        eventDispatcherCallback(dispatcher)
+        dispatcher
+      }
       events = eventStream.dequeue
       state ← events.scan(initialState)((state, event) ⇒ {
         val reducer: AppState ⇒ AppState = if (stateReducer.isDefinedAt(event)) stateReducer(event) else s ⇒ s
