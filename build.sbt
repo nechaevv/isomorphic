@@ -1,16 +1,14 @@
-import org.scalajs.core.tools.linker.backend.OutputMode.{ECMAScript51Global, ECMAScript51Isolated, ECMAScript6}
+import org.scalajs.core.tools.linker.backend.OutputMode.ECMAScript6
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 val sharedSettings = Seq(
-  organization := "com.github.nechaevv.sjs-ui",
-  version := "0.1",
+  organization := "com.github.nechaevv.isomorphic",
+  version := "0.1-SNAPSHOT",
   scalaVersion := "2.12.6"
 )
 
-val reactVersion = "16.5.0"
-
-lazy val sjsUI = crossProject(JSPlatform, JVMPlatform).in(file("sjs-ui"))
-  .settings(name := "sjs-ui", version := "0.1-SNAPSHOT")
+lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
+  .settings(name := "isomorphic-core", version := "0.1-SNAPSHOT")
   .settings(sharedSettings)
   .jvmSettings(
     libraryDependencies ++= Seq(
@@ -29,6 +27,8 @@ lazy val sjsUI = crossProject(JSPlatform, JVMPlatform).in(file("sjs-ui"))
     scalacOptions += "-P:scalajs:sjsDefinedByDefault"
   )
 
+val reactVersion = "16.5.0"
+
 lazy val example = project.in(file("example"))
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
   .settings(sharedSettings ++ Seq(
@@ -39,5 +39,5 @@ lazy val example = project.in(file("example"))
     npmDependencies in Compile ++= Seq("react" → reactVersion, "react-dom" → reactVersion),
     webpackBundlingMode := BundlingMode.LibraryOnly()
   ))
-  .dependsOn(sjsUI.js)
+  .dependsOn(core.js)
 
