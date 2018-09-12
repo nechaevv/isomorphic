@@ -3,11 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>Scala JS + React</title>
+  <!--
   <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
+  -->
 </head>
 <body>
 <app-tasks></app-tasks>
-<script src="target/scala-2.12/example-fastopt.js"></script>
+<script src="target/scala-2.12/scalajs-bundler/main/example-fastopt-library.js"></script>
+<script src="target/scala-2.12/scalajs-bundler/main/example-fastopt-loader.js"></script>
+<script src="target/scala-2.12/scalajs-bundler/main/example-fastopt.js"></script>
 </body>
 </html>

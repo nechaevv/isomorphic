@@ -11,9 +11,14 @@ object ReactRenderer extends Renderer[ReactElement] {
 
   override def element(name: String, attributes: Iterable[(String, String)], eventListeners: Iterable[(EventType, Event ⇒ Unit)], childElements: Seq[ReactElement]): ReactElement = {
     val props = Dictionary.empty[js.Any]
-    for ((n, v) ← attributes) props(n) = v
+    for ((n, v) ← attributes) props(mapAttributeName(n)) = v
     for ((e, h) ← eventListeners) props("on" + e.name) = h
     React.createElement(name, props, childElements:_*)
+  }
+
+  def mapAttributeName(name: String): String = name match {
+    case "class" ⇒ "className"
+    case s ⇒ s
   }
 
   override def fragment(contents: ReactElement*): ReactElement = {

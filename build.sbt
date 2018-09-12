@@ -7,6 +7,8 @@ val sharedSettings = Seq(
   scalaVersion := "2.12.6"
 )
 
+val reactVersion = "16.5.0"
+
 lazy val sjsUI = crossProject(JSPlatform, JVMPlatform).in(file("sjs-ui"))
   .settings(name := "sjs-ui", version := "0.1-SNAPSHOT")
   .settings(sharedSettings)
@@ -28,12 +30,14 @@ lazy val sjsUI = crossProject(JSPlatform, JVMPlatform).in(file("sjs-ui"))
   )
 
 lazy val example = project.in(file("example"))
-  .enablePlugins(ScalaJSPlugin)
+  .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
   .settings(sharedSettings ++ Seq(
     name := "example",
     scalaJSUseMainModuleInitializer := true,
     scalacOptions += "-P:scalajs:sjsDefinedByDefault",
-    scalaJSOutputMode := ECMAScript6
+    scalaJSOutputMode := ECMAScript6,
+    npmDependencies in Compile ++= Seq("react" → reactVersion, "react-dom" → reactVersion),
+    webpackBundlingMode := BundlingMode.LibraryOnly()
   ))
   .dependsOn(sjsUI.js)
 

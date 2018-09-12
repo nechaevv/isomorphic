@@ -11,7 +11,7 @@ object TaskEditComponent extends Component[Task, AppEvent] {
     val completedChange: EventHandler = e ⇒ dispatcher.dispatch(TaskSetCompletedEvent(e.currentTarget.asInstanceOf[HTMLInputElement].checked))
     form(
       input("type" := "text", "value" := task.name, EventTypes.Change → nameChange),
-      input("type" := "checkbox", "checked" :? task.completed, EventTypes.Change → completedChange),
+      input("type" := "checkbox", "checked" := (if (task.completed) "checked" else "") , EventTypes.Change → completedChange),
       button("type" := "button", EventTypes.Click → save, "SAVE")
     )
   }
