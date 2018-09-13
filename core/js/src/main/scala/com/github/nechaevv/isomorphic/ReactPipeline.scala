@@ -1,16 +1,16 @@
 package com.github.nechaevv.isomorphic
 
 import cats.effect._
-import cats.syntax.all._
 import com.github.nechaevv.isomorphic.react.{ReactDOM, ReactRenderer}
 import fs2._
 import fs2.concurrent.Queue
-import org.scalajs.dom.{Element, Node}
+import org.scalajs.dom.Node
 
 object ReactPipeline {
-  def run[AppEvent, AppState, AppComponent <: platform.Component[AppState, AppEvent]]
-    (container: Node, appComponent: AppComponent, stateReducer: Reducer[AppEvent, AppState], initialState: AppState,
-     appStartEvent: AppEvent, eventDispatcherCallback: EventDispatcher[AppEvent] ⇒ Unit)(implicit concurrent: Concurrent[IO]): IO[Unit] = {
+  def run[AppEvent, AppState](container: Node, appComponent: platform.Component[AppState, AppEvent],
+                              stateReducer: Reducer[AppEvent, AppState], initialState: AppState,
+                              appStartEvent: AppEvent, eventDispatcherCallback: EventDispatcher[AppEvent] ⇒ Unit)
+                             (implicit concurrent: Concurrent[IO]): IO[Unit] = {
     val stream = for {
       eventStream ← Stream.eval(Queue.unbounded[IO, AppEvent])
       _ ← Stream.eval(eventStream.enqueue1(appStartEvent))

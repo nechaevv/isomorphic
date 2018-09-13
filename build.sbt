@@ -7,6 +7,8 @@ val sharedSettings = Seq(
   scalaVersion := "2.12.6"
 )
 
+val reactVersion = "16.5.0"
+
 lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
   .settings(name := "isomorphic-core", version := "0.1-SNAPSHOT")
   .settings(sharedSettings)
@@ -24,10 +26,10 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
       "org.typelevel" %%% "cats-effect" % "1.0.0",
       "com.github.julien-truffaut" %%% "monocle-core" % "1.5.1-cats"
     ),
+    npmDependencies in Compile ++= Seq("react" → reactVersion, "react-dom" → reactVersion),
     scalacOptions += "-P:scalajs:sjsDefinedByDefault"
   )
-
-val reactVersion = "16.5.0"
+  .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
 
 lazy val example = project.in(file("example"))
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
@@ -36,7 +38,6 @@ lazy val example = project.in(file("example"))
     scalaJSUseMainModuleInitializer := true,
     scalacOptions += "-P:scalajs:sjsDefinedByDefault",
     scalaJSOutputMode := ECMAScript6,
-    npmDependencies in Compile ++= Seq("react" → reactVersion, "react-dom" → reactVersion),
     webpackBundlingMode := BundlingMode.LibraryOnly()
   ))
   .dependsOn(core.js)

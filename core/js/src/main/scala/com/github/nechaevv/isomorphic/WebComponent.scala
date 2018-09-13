@@ -3,11 +3,10 @@ package com.github.nechaevv.isomorphic
 trait WebComponent {
   type Event
   type State
-  type Component <: platform.Component[State, Event]
 
   def tagName: String
   def attributes: Iterable[String] = Seq.empty
-  def rootComponent: Component
+  def rootComponent: platform.Component[State, Event]
   def initialState: State
   def reducer: Reducer[Event, State]
   def useShadowRoot: Boolean = false

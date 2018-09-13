@@ -6,13 +6,12 @@ object TasksApp extends WebComponent {
 
   override type Event = AppEvent
   override type State = TasksState
-  override type Component = AppComponent.type
 
   override def useShadowRoot: Boolean = false
 
   override def tagName: String = "app-tasks"
 
-  override def rootComponent: Component = AppComponent
+  override def rootComponent: AppComponent.type = AppComponent
 
   override def initialState: State = initialTasksState
 

@@ -35,7 +35,8 @@ class CustomElement[T <: WebComponent](val webComponent: T) extends HTMLElement 
     dispatcher ← dispatcher
   } dispatcher.dispatch(event)
 
-  ReactPipeline.run[webComponent.Event, webComponent.State, webComponent.Component](container,
+  ReactPipeline.run[webComponent.Event, webComponent.State](
+    container,
     webComponent.rootComponent,
     webComponent.reducer,
     webComponent.initialState,
