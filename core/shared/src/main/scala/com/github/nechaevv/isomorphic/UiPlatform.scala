@@ -2,7 +2,7 @@ package com.github.nechaevv.isomorphic
 
 import scala.language.implicitConversions
 
-trait UiPlatform {
+trait UiPlatform extends Tags {
   type Event
   type Component[S, E] = (S, EventDispatcher[E]) ⇒ Element
   type EventHandler = Event ⇒ Unit
@@ -13,10 +13,10 @@ trait UiPlatform {
     def apply[E](renderer: Renderer[E]): E
   }
 
-  trait Renderer[Element] {
-    def element(name: String, attributes: Iterable[(String, String)], eventListeners: Iterable[(EventType, Event ⇒ Unit)], childElements: Seq[Element]): Element
-    def fragment(contents: Element*): Element
-    def text(content: String): Element
+  trait Renderer[E] {
+    def element(name: String, attributes: Iterable[(String, String)], eventListeners: Iterable[(EventType, Event ⇒ Unit)], childElements: Seq[E]): E
+    def fragment(contents: E*): E
+    def text(content: String): E
   }
 
   trait ElementModifier
@@ -24,33 +24,6 @@ trait UiPlatform {
   case class EventListener(eventType: EventType, handler: Event ⇒ Unit) extends ElementModifier
   case class ChildElement(element: Element) extends ElementModifier
   case class MultiModifier(mods: Iterable[ElementModifier]) extends ElementModifier
-
-  class Tag(name: String) {
-    type AttributeDef = (String, String)
-    type EventListenerDef = (EventType, EventHandler)
-
-    def apply(modifiers: ElementModifier*): Element = {
-
-      def parseModifiers(init: (Seq[AttributeDef], Seq[EventListenerDef], Seq[Element]),
-                         modifiers: Iterable[ElementModifier]): (Seq[AttributeDef], Seq[EventListenerDef], Seq[Element]) = {
-        modifiers.foldLeft(init) { (acc, mod) ⇒
-          val (attrs, els, childs) = acc
-          mod match {
-            case Attribute(attrName, value) ⇒ (attrs :+ (attrName, value), els, childs)
-            case EventListener(eventType, handler) ⇒ (attrs, els :+ (eventType, handler), childs)
-            case ChildElement(element) ⇒ (attrs, els, childs :+ element)
-            case MultiModifier(mods) ⇒ parseModifiers(acc, mods)
-          }
-        }
-      }
-
-      val (attributes, eventListeners, children) = parseModifiers((Seq.empty[(String, String)], Seq.empty[EventListenerDef], Seq.empty[Element]), modifiers)
-
-      new Element {
-        override def apply[E](renderer: Renderer[E]): E = renderer.element(name, attributes, eventListeners, children.map(_.apply(renderer)))
-      }
-    }
-  }
 
   implicit class PimpedString(s: String) {
     def :=(value: String) : Attribute = Attribute(s, value)
@@ -67,14 +40,5 @@ trait UiPlatform {
   })
   implicit def modifierIterableImplicit[T](mods: Iterable[T])(implicit conv: T ⇒ ElementModifier): MultiModifier = MultiModifier(mods.map(conv))
   implicit def modifierOptionImplicit[T](mod: Option[T])(implicit conv: T ⇒ ElementModifier): MultiModifier = MultiModifier(mod.map(conv))
-
-  def div = new Tag("div")
-  def h1 = new Tag("h1")
-  def h2 = new Tag("h2")
-  def ul = new Tag("ul")
-  def li = new Tag("li")
-  def form = new Tag("form")
-  def input = new Tag("input")
-  def button = new Tag("button")
 
 }
