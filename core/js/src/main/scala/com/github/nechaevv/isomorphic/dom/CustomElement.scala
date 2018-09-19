@@ -39,6 +39,7 @@ class CustomElement[T <: WebComponent](val webComponent: T) extends HTMLElement 
     container,
     webComponent.rootComponent,
     webComponent.reducer,
+    webComponent.effect,
     webComponent.initialState,
     webComponent.initEvent(webComponent.attributes.map(attribute ⇒ attribute → getAttribute(attribute))),
     eventDispatcher ⇒ this.dispatcher = Some(eventDispatcher)

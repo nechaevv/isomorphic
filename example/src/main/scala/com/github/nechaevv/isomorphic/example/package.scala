@@ -10,7 +10,8 @@ package object example {
       Task("Task 2", false)
     ),
     editingIndex = None,
-    editingTask = Task("", false)
+    editingTask = Task("", false),
+    message = None
   )
 
   def stateReducer: Reducer[AppEvent, TasksState] = {
@@ -26,6 +27,11 @@ package object example {
         editingTask = Task("", false),
         editingIndex = None
       )
+    case ShowMessage(msg) ⇒ s => s.copy(message = Some(msg))
+  }
+
+  def appEffect: Effect[AppEvent, TasksState] = {
+    case TaskSaveEvent ⇒ s ⇒ fs2.Stream(ShowMessage(s"Task ${s.tasks.length} saved"))
   }
 
   implicit val tasksAppElementDef = new CustomElementDef[TasksApp.type](js.constructorOf[TasksAppCustomElement])

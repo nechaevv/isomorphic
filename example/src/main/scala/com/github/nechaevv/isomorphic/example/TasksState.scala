@@ -4,5 +4,6 @@ case class TasksState
 (
   tasks: Seq[Task],
   editingIndex: Option[Int],
-  editingTask: Task
+  editingTask: Task,
+  message: Option[String]
 )

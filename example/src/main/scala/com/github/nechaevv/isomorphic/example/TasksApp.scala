@@ -1,6 +1,6 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.{Reducer, WebComponent}
+import com.github.nechaevv.isomorphic.{Effect, Reducer, WebComponent}
 
 object TasksApp extends WebComponent {
 
@@ -16,6 +16,8 @@ object TasksApp extends WebComponent {
   override def initialState: State = initialTasksState
 
   override def reducer: Reducer[Event, State] = stateReducer
+
+  override def effect: Effect[AppEvent, TasksState] = appEffect
 
   override def initEvent(properties: Iterable[(String, String)]): Event = AppStartEvent
 

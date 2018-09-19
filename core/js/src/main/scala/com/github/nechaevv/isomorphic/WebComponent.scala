@@ -9,6 +9,7 @@ trait WebComponent {
   def rootComponent: platform.Component[State, Event]
   def initialState: State
   def reducer: Reducer[Event, State]
+  def effect: Effect[Event, State]
   def useShadowRoot: Boolean = false
 
   def initEvent(properties: Iterable[(String, String)]): Event
