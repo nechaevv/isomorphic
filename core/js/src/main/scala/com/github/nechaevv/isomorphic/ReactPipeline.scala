@@ -7,7 +7,7 @@ import fs2.concurrent.Queue
 import org.scalajs.dom.Node
 
 object ReactPipeline {
-  def run[AppEvent, AppState](container: Node, appComponent: platform.Component[AppState, AppEvent],
+  def run[AppEvent, AppState <: AnyRef](container: Node, appComponent: platform.Component[AppState, AppEvent],
                               stateReducer: Reducer[AppEvent, AppState], effects: Effect[AppEvent, AppState], initialState: AppState,
                               appStartEvent: AppEvent, eventDispatcherCallback: EventDispatcher[AppEvent] ⇒ Unit)
                              (implicit concurrent: Concurrent[IO]): IO[Unit] = {
@@ -20,21 +20,21 @@ object ReactPipeline {
         dispatcher
       }
       events = eventStream.dequeue
-      ss ← events.scan((initialState, appStartEvent))((acc: (AppState, AppEvent), event: AppEvent) ⇒ {
-        val (state, _) = acc
+      reducerOutput ← events.scan((initialState, appStartEvent, false))((acc: (AppState, AppEvent, Boolean), event: AppEvent) ⇒ {
+        val (state, _, hasChanged) = acc
         if (event == appStartEvent) acc
         else {
           val reducer: AppState ⇒ AppState = if (stateReducer.isDefinedAt(event)) stateReducer(event) else s ⇒ s
-          (reducer(state), event)
+          val newState = reducer(state)
+          (newState, event, !(state eq newState))
         }
       })
-      (state, event) = ss
-      _ ← Stream.eval(IO {
+      (state, event, hasChanged) = reducerOutput
+      _ ← if (hasChanged) Stream.eval(IO {
         val reactComponent = appComponent(state, eventDispatcher)(ReactRenderer)
         ReactDOM.render(reactComponent, container)
-      } )
-      effectEvents = if (effects.isDefinedAt(event)) effects(event)(state) else Stream.empty
-      _ ← Stream.eval(effectEvents.through(eventStream.enqueue).compile.drain)
+      } ) else Stream.empty
+      _ ← if (effects.isDefinedAt(event)) Stream.eval(IO { eventDispatcher.pipe(effects(event)(state)) }) else Stream.empty
     } yield ()
     stream.compile.drain
   }

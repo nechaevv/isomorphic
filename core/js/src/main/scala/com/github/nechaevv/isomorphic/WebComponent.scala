@@ -2,7 +2,7 @@ package com.github.nechaevv.isomorphic
 
 trait WebComponent {
   type Event
-  type State
+  type State <: AnyRef
 
   def tagName: String
   def attributes: Iterable[String] = Seq.empty
