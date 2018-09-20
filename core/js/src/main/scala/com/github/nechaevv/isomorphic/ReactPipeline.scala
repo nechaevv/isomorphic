@@ -20,7 +20,7 @@ object ReactPipeline {
         dispatcher
       }
       events = eventStream.dequeue
-      reducerOutput ← events.scan((initialState, appStartEvent, false))((acc: (AppState, AppEvent, Boolean), event: AppEvent) ⇒ {
+      reducerOutput ← events.scan((initialState, appStartEvent, true))((acc: (AppState, AppEvent, Boolean), event: AppEvent) ⇒ {
         val (state, _, hasChanged) = acc
         if (event == appStartEvent) acc
         else {
