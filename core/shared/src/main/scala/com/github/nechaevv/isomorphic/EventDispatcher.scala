@@ -5,5 +5,5 @@ import fs2.Stream
 
 trait EventDispatcher[E] {
   def dispatch(event: E): Unit
-  def pipe(events: Stream[IO, E]): Unit
+  def pipe(events: Stream[IO, E]): fs2.Stream[IO, Unit]
 }

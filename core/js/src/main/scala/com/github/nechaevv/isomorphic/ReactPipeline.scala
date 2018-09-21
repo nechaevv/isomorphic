@@ -21,7 +21,7 @@ object ReactPipeline {
       }
       events = eventStream.dequeue
       reducerOutput ← events.scan((initialState, appStartEvent, true))((acc: (AppState, AppEvent, Boolean), event: AppEvent) ⇒ {
-        val (state, _, hasChanged) = acc
+        val (state, _, _) = acc
         if (event == appStartEvent) acc
         else {
           val reducer: AppState ⇒ AppState = if (stateReducer.isDefinedAt(event)) stateReducer(event) else s ⇒ s
@@ -34,7 +34,8 @@ object ReactPipeline {
         val reactComponent = appComponent(state, eventDispatcher)(ReactRenderer)
         ReactDOM.render(reactComponent, container)
       } ) else Stream.empty
-      _ ← if (effects.isDefinedAt(event)) Stream.eval(IO { eventDispatcher.pipe(effects(event)(state)) }) else Stream.empty
+      _ ← if (effects.isDefinedAt(event)) Stream.eval(concurrent.start(eventDispatcher.pipe(effects(event)(state)).compile.drain))
+        else Stream.empty
     } yield ()
     stream.compile.drain
   }
