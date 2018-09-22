@@ -13,7 +13,6 @@ object ReactPipeline {
                              (implicit concurrent: Concurrent[IO]): IO[Unit] = {
     val stream = for {
       eventStream ← Stream.eval(Queue.unbounded[IO, AppEvent])
-      _ ← Stream.eval(eventStream.enqueue1(appStartEvent))
       eventDispatcher = {
         val dispatcher = new QueueEventDispatcher[AppEvent](eventStream)
         eventDispatcherCallback(dispatcher)
