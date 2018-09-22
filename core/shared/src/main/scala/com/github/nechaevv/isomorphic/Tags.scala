@@ -35,6 +35,7 @@ trait Tags { this: UiPlatform ⇒
   def a = new Tag("a")
   def button = new Tag("button")
   def div = new Tag("div")
+  def footer = new Tag("footer")
   def form = new Tag("form")
   def h1 = new Tag("h1")
   def h2 = new Tag("h2")
