@@ -44,6 +44,7 @@ trait Tags { this: UiPlatform ⇒
   def li = new Tag("li")
   def option = new Tag("option")
   def p = new Tag("p")
+  def section = new Tag("section")
   def select = new Tag("select")
   def span = new Tag("span")
   def ul = new Tag("ul")
