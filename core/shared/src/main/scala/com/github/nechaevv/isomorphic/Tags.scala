@@ -40,6 +40,7 @@ trait Tags { this: UiPlatform ⇒
   def h2 = new Tag("h2")
   def header = new Tag("header")
   def input = new Tag("input")
+  def label = new Tag("label")
   def li = new Tag("li")
   def option = new Tag("option")
   def p = new Tag("p")
