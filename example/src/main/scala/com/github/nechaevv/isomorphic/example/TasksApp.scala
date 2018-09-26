@@ -1,8 +1,8 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.{Effect, Reducer, WebComponent}
+import com.github.nechaevv.isomorphic.{Effect, Reducer, ReactiveWebComponent}
 
-object TasksApp extends WebComponent {
+object TasksApp extends ReactiveWebComponent {
 
   override type Event = AppEvent
   override type State = TasksState

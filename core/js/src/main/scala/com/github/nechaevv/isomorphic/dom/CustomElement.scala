@@ -1,19 +1,19 @@
 package com.github.nechaevv.isomorphic.dom
 
 import cats.effect.{ContextShift, IO}
-import com.github.nechaevv.isomorphic.{EventDispatcher, ReactPipeline, WebComponent}
+import com.github.nechaevv.isomorphic.{EventDispatcher, ReactPipeline, ReactiveWebComponent}
 import org.scalajs.dom.raw.{HTMLElement, Node}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 
-class CustomElement[T <: WebComponent](val webComponent: T) extends HTMLElement {
+class CustomElement[T <: ReactiveWebComponent](val webComponent: T) extends HTMLElement {
   implicit val defaultContextShift: ContextShift[IO] = IO.contextShift(global)
 
   private var dispatcher: Option[EventDispatcher[webComponent.Event]] = None
 
   private val container: Node = if (webComponent.useShadowRoot)
-    this.asInstanceOf[ElementWithShadowRoot].attachShadow(js.Dynamic.literal("mode" → "open")) else this
+    this.asInstanceOf[HTMLElementWithShadowRoot].attachShadow(js.Dynamic.literal("mode" → "open")) else this
 
   def connectedCallback(): Unit = for {
     event ← webComponent.connectedEffect

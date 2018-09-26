@@ -25,6 +25,11 @@ trait UiPlatform extends Tags {
   case class ChildElement(element: Element) extends ElementModifier
   case class MultiModifier(mods: Iterable[ElementModifier]) extends ElementModifier
 
+  implicit class PimpedSymbol(s: Symbol) {
+    def :=(value: String) : Attribute = Attribute(s.name, value)
+    def :?(value: Boolean) : MultiModifier = MultiModifier(if (value) Seq(Attribute(s.name, s.name)) else Seq.empty[Attribute])
+  }
+
   implicit class PimpedString(s: String) {
     def :=(value: String) : Attribute = Attribute(s, value)
     def :?(value: Boolean) : MultiModifier = MultiModifier(if (value) Seq(Attribute(s, s)) else Seq.empty[Attribute])
@@ -40,5 +45,7 @@ trait UiPlatform extends Tags {
   })
   implicit def modifierIterableImplicit[T](mods: Iterable[T])(implicit conv: T ⇒ ElementModifier): MultiModifier = MultiModifier(mods.map(conv))
   implicit def modifierOptionImplicit[T](mod: Option[T])(implicit conv: T ⇒ ElementModifier): MultiModifier = MultiModifier(mod.map(conv))
+
+  implicit def webComponentToTag(webComponent: WebComponent): Tag = new Tag(webComponent.tagName)
 
 }

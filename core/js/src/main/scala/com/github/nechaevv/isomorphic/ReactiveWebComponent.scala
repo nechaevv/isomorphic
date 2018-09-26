@@ -1,6 +1,6 @@
 package com.github.nechaevv.isomorphic
 
-trait WebComponent {
+trait ReactiveWebComponent extends WebComponent {
   type Event
   type State <: AnyRef
 
@@ -17,8 +17,5 @@ trait WebComponent {
   def disconnectedEffect: Option[Event] = None
   def adoptedEffect: Option[Event] = None
   def attributeChangedEffect(name: String, oldValue: String, newValue: String): Option[Event] = None
-
-  import platform._
-  def apply = new Tag(tagName)
 
 }
