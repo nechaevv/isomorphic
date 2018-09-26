@@ -1,14 +1,14 @@
 package com.github.nechaevv.isomorphic.dom
 
-import cats.effect.internals.IOContextShift
 import cats.effect.{ContextShift, IO}
 import com.github.nechaevv.isomorphic.{EventDispatcher, ReactPipeline, WebComponent}
 import org.scalajs.dom.raw.{HTMLElement, Node}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 
 class CustomElement[T <: WebComponent](val webComponent: T) extends HTMLElement {
-  implicit val defaultContextShift: ContextShift[IO] = IOContextShift.global
+  implicit val defaultContextShift: ContextShift[IO] = IO.contextShift(global)
 
   private var dispatcher: Option[EventDispatcher[webComponent.Event]] = None
 

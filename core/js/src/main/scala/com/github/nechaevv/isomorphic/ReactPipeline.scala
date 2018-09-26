@@ -22,11 +22,11 @@ object ReactPipeline {
       reducerOutput ← events.scan((initialState, appStartEvent, true))((acc: (AppState, AppEvent, Boolean), event: AppEvent) ⇒ {
         val (state, _, _) = acc
         if (event == appStartEvent) acc
-        else {
-          val reducer: AppState ⇒ AppState = if (stateReducer.isDefinedAt(event)) stateReducer(event) else s ⇒ s
-          val newState = reducer(state)
+        else if (stateReducer.isDefinedAt(event)) {
+          val newState = stateReducer(event)(state)
           (newState, event, !(state eq newState))
         }
+        else  (state, event, false)
       })
       (state, event, hasChanged) = reducerOutput
       _ ← if (hasChanged) Stream.eval(IO {
