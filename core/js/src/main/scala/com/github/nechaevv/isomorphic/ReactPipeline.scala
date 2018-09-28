@@ -29,12 +29,13 @@ object ReactPipeline {
         else  (state, event, false)
       })
       (state, event, hasChanged) = reducerOutput
-      _ ← if (hasChanged) Stream.eval(IO {
+      renderStream = if (hasChanged) Stream.eval(IO {
         val reactComponent = appComponent(state, eventDispatcher)(ReactRenderer)
         ReactDOM.render(reactComponent, container)
       } ) else Stream.empty
-      _ ← if (effects.isDefinedAt(event)) Stream.eval(concurrent.start(eventDispatcher.pipe(effects(event)(state)).compile.drain))
+      effectStream = if (effects.isDefinedAt(event)) Stream.eval(concurrent.start(eventDispatcher.pipe(effects(event)(state)).compile.drain))
         else Stream.empty
+      _ ← renderStream ++ effectStream
     } yield ()
     stream.compile.drain
   }
