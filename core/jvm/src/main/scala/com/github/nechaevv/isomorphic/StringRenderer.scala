@@ -1,6 +1,6 @@
 package com.github.nechaevv.isomorphic
 
-abstract class StringRenderer extends Renderer[String] {
+object StringRenderer extends Renderer[String] {
   override def element(name: String, modifiers: ElementModifier*): String = {
     def parseModifiers(mods: Iterable[ElementModifier]): (Seq[String], Seq[String]) = modifiers.foldLeft(Seq.empty[String], Seq.empty[String])((acc, modifier) ⇒ {
       val (attributes, children) = acc

@@ -11,7 +11,7 @@ object ReactRenderer extends Renderer[ReactElement] {
   override def element(name: String, modifiers: ElementModifier*): ReactElement = {
     val props = Dictionary.empty[js.Any]
     var childElements: Seq[ReactElement] = Seq.empty
-    def parseModifiers(mods: ElementModifier*): Unit = mods foreach {
+    def parseModifiers(mods: Iterable[ElementModifier]): Unit = mods foreach {
       case Attribute(n, v) ⇒ props(mapAttributeName(n)) = v
       case EventListener(e, h) ⇒ props("on" + e.name) = h
       case ChildElement(e) ⇒ childElements = childElements :+ e(this)
