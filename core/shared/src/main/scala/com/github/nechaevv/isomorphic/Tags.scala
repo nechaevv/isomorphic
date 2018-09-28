@@ -4,16 +4,16 @@ class Tag(name: String) {
 
   def apply(modifiers: ElementModifier*): Element = {
     new Element {
-      override def apply[E](renderer: Renderer[E]): E = renderer.element(name, modifiers)
+      override def apply[E](renderer: Renderer[E]): E = renderer.element(name, modifiers: _*)
     }
   }
 
   def append(newModifiers: ElementModifier*): Tag = new Tag(name) {
-    override def apply(modifiers: ElementModifier*): Element = super.apply(modifiers ++ newModifiers)
+    override def apply(modifiers: ElementModifier*): Element = super.apply(modifiers ++ newModifiers: _*)
   }
 
   def prepend(newModifiers: ElementModifier*): Tag = new Tag(name) {
-    override def apply(modifiers: ElementModifier*): Element = super.apply(newModifiers ++ modifiers)
+    override def apply(modifiers: ElementModifier*): Element = super.apply(newModifiers ++ modifiers: _*)
   }
 
 }
@@ -21,7 +21,7 @@ class Tag(name: String) {
 object Tags {
 
   def fragment(elements: Element*): Element = new Element {
-    override def apply[E](renderer: Renderer[E]): E = renderer.fragment(elements.map(element ⇒ element(renderer)):_*)
+    override def apply[E](renderer: Renderer[E]): E = renderer.fragment(elements.map(element ⇒ element(renderer)): _*)
   }
 
   def a = new Tag("a")

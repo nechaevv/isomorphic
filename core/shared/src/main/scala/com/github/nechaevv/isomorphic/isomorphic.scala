@@ -29,7 +29,6 @@ package object isomorphic {
 
   implicit def autonomousWebComponentToTag(webComponent: AutonomousWebComponent): Tag = new Tag(webComponent.elementName)
 
-  implicit def extensionWebComponentToTag(webComponent: ExtensionWebComponent): Tag = new Tag(webComponent.extendedElement) {
-    override def apply(modifiers: ElementModifier*): Element = super.apply(modifiers :+ Attribute("is", webComponent.elementName))
-  }
+  implicit def extensionWebComponentToTag(webComponent: ExtensionWebComponent): Tag = new Tag(webComponent.extendedElement)
+    .append(Attribute("is", webComponent.elementName))
 }
