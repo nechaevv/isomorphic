@@ -1,32 +1,24 @@
 package com.github.nechaevv.isomorphic
 
-trait Tags { this: UiPlatform ⇒
-  class Tag(name: String) {
-    type AttributeDef = (String, String)
-    type EventListenerDef = (EventType, EventHandler)
+class Tag(name: String) {
 
-    def apply(modifiers: ElementModifier*): Element = {
-
-      def parseModifiers(init: (Seq[AttributeDef], Seq[EventListenerDef], Seq[Element]),
-                         modifiers: Iterable[ElementModifier]): (Seq[AttributeDef], Seq[EventListenerDef], Seq[Element]) = {
-        modifiers.foldLeft(init) { (acc, mod) ⇒
-          val (attrs, els, childs) = acc
-          mod match {
-            case Attribute(attrName, value) ⇒ (attrs :+ (attrName, value), els, childs)
-            case EventListener(eventType, handler) ⇒ (attrs, els :+ (eventType, handler), childs)
-            case ChildElement(element) ⇒ (attrs, els, childs :+ element)
-            case MultiModifier(mods) ⇒ parseModifiers(acc, mods)
-          }
-        }
-      }
-
-      val (attributes, eventListeners, children) = parseModifiers((Seq.empty[(String, String)], Seq.empty[EventListenerDef], Seq.empty[Element]), modifiers)
-
-      new Element {
-        override def apply[E](renderer: Renderer[E]): E = renderer.element(name, attributes, eventListeners, children.map(_.apply(renderer)))
-      }
+  def apply(modifiers: ElementModifier*): Element = {
+    new Element {
+      override def apply[E](renderer: Renderer[E]): E = renderer.element(name, modifiers)
     }
   }
+
+  def append(newModifiers: ElementModifier*): Tag = new Tag(name) {
+    override def apply(modifiers: ElementModifier*): Element = super.apply(modifiers ++ newModifiers)
+  }
+
+  def prepend(newModifiers: ElementModifier*): Tag = new Tag(name) {
+    override def apply(modifiers: ElementModifier*): Element = super.apply(newModifiers ++ modifiers)
+  }
+
+}
+
+object Tags {
 
   def fragment(elements: Element*): Element = new Element {
     override def apply[E](renderer: Renderer[E]): E = renderer.fragment(elements.map(element ⇒ element(renderer)):_*)

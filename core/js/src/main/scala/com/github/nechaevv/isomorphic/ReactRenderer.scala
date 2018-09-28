@@ -1,18 +1,23 @@
-package com.github.nechaevv.isomorphic.react
+package com.github.nechaevv.isomorphic
 
-import com.github.nechaevv.isomorphic.EventType
-import com.github.nechaevv.isomorphic.platform._
+import api.{React, ReactElement}
+import frontend._
 
 import scala.scalajs.js
-import js.JSConverters._
 import scala.scalajs.js.Dictionary
 
 object ReactRenderer extends Renderer[ReactElement] {
 
-  override def element(name: String, attributes: Iterable[(String, String)], eventListeners: Iterable[(EventType, Event ⇒ Unit)], childElements: Seq[ReactElement]): ReactElement = {
+  override def element(name: String, modifiers: ElementModifier*): ReactElement = {
     val props = Dictionary.empty[js.Any]
-    for ((n, v) ← attributes) props(mapAttributeName(n)) = v
-    for ((e, h) ← eventListeners) props("on" + e.name) = h
+    var childElements: Seq[ReactElement] = Seq.empty
+    def parseModifiers(mods: ElementModifier*): Unit = mods foreach {
+      case Attribute(n, v) ⇒ props(mapAttributeName(n)) = v
+      case EventListener(e, h) ⇒ props("on" + e.name) = h
+      case ChildElement(e) ⇒ childElements = childElements :+ e(this)
+      case MultiModifier(mm) ⇒ parseModifiers(mm)
+    }
+    parseModifiers(modifiers)
     React.createElement(name, props, childElements:_*)
   }
 

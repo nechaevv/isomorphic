@@ -1,4 +1,4 @@
-package com.github.nechaevv.isomorphic.dom
+package com.github.nechaevv.isomorphic.api
 
 import org.scalajs.dom.raw.{HTMLDocument, HTMLElement}
 

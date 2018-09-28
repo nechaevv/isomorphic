@@ -1,7 +1,6 @@
 package com.github.nechaevv.isomorphic
 
 import scala.scalajs.js
-import com.github.nechaevv.isomorphic.dom.{CustomElement, CustomElementDef}
 
 package object example {
   val initialTasksState = TasksState(
@@ -14,7 +13,7 @@ package object example {
     message = None
   )
 
-  def stateReducer: Reducer[AppEvent, TasksState] = {
+  def stateReducer: Reducer[TasksState] = {
     case TaskSelectEvent(taskIndex) ⇒
       s: TasksState ⇒ s.copy(editingTask = s.tasks(taskIndex), editingIndex = Some(taskIndex))
     case TaskEditNameEvent(name) ⇒
@@ -30,10 +29,10 @@ package object example {
     case ShowMessage(msg) ⇒ s => s.copy(message = Some(msg))
   }
 
-  def appEffect: Effect[AppEvent, TasksState] = {
+  def appEffect: Effect[TasksState] = {
     case TaskSaveEvent ⇒ s ⇒ fs2.Stream(ShowMessage(s"Task ${s.tasks.length} saved"))
   }
 
-  implicit val tasksAppElementDef = new CustomElementDef[TasksApp.type](js.constructorOf[TasksAppCustomElement])
-  class TasksAppCustomElement extends CustomElement(TasksApp)
+  implicit val tasksAppElementDef = new CustomElementDef[TasksApp.type](js.constructorOf[TasksAppReactiveHostCustomElement])
+  class TasksAppReactiveHostCustomElement extends ReactiveHostCustomElement(TasksApp)
 }

@@ -1,9 +1,9 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.dom.CustomElementRegistry
+import com.github.nechaevv.isomorphic.WebComponents
 
 object Main {
   def main(args: Array[String]): Unit = {
-    CustomElementRegistry.register(TasksApp)
+    WebComponents.define(TasksApp)
   }
 }

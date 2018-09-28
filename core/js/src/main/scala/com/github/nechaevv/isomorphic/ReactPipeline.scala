@@ -1,25 +1,25 @@
 package com.github.nechaevv.isomorphic
 
 import cats.effect._
-import com.github.nechaevv.isomorphic.react.{ReactDOM, ReactRenderer}
+import com.github.nechaevv.isomorphic.api.ReactDOM
 import fs2._
 import fs2.concurrent.Queue
 import org.scalajs.dom.Node
 
 object ReactPipeline {
-  def run[AppEvent, AppState <: AnyRef](container: Node, appComponent: platform.Component[AppState, AppEvent],
-                              stateReducer: Reducer[AppEvent, AppState], effects: Effect[AppEvent, AppState], initialState: AppState,
-                              appStartEvent: AppEvent, eventDispatcherCallback: EventDispatcher[AppEvent] ⇒ Unit)
+  def run[AppState <: AnyRef](container: Node, appComponent: Component[AppState],
+                              stateReducer: Reducer[AppState], effects: Effect[AppState], initialState: AppState,
+                              appStartEvent: Any, eventDispatcherCallback: EventDispatcher ⇒ Unit)
                              (implicit concurrent: Concurrent[IO]): IO[Unit] = {
     val stream = for {
-      eventStream ← Stream.eval(Queue.unbounded[IO, AppEvent])
+      eventStream ← Stream.eval(Queue.unbounded[IO, Any])
       eventDispatcher = {
-        val dispatcher = new QueueEventDispatcher[AppEvent](eventStream)
+        val dispatcher = new QueueEventDispatcher(eventStream)
         eventDispatcherCallback(dispatcher)
         dispatcher
       }
       events = eventStream.dequeue
-      reducerOutput ← events.scan((initialState, appStartEvent, true))((acc: (AppState, AppEvent, Boolean), event: AppEvent) ⇒ {
+      reducerOutput ← events.scan((initialState, appStartEvent, true))((acc: (AppState, Any, Boolean), event: Any) ⇒ {
         val (state, _, _) = acc
         if (event == appStartEvent) acc
         else if (stateReducer.isDefinedAt(event)) {

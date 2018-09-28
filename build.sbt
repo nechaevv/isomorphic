@@ -16,7 +16,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
     libraryDependencies ++= Seq(
       "co.fs2" %% "fs2-core" % "1.0.0-M5",
       "org.typelevel" %% "cats-effect" % "1.0.0",
-      "com.github.julien-truffaut" %% "monocle-core" % "1.5.1-cats"
     )
   )
   .jsSettings(
@@ -24,7 +23,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
       "org.scala-js" %%% "scalajs-dom" % "0.9.5",
       "co.fs2" %%% "fs2-core" % "1.0.0-M5",
       "org.typelevel" %%% "cats-effect" % "1.0.0",
-      "com.github.julien-truffaut" %%% "monocle-core" % "1.5.1-cats"
     ),
     npmDependencies in Compile ++= Seq("react" → reactVersion, "react-dom" → reactVersion),
     scalacOptions += "-P:scalajs:sjsDefinedByDefault"

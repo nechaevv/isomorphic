@@ -1,9 +1,9 @@
-package com.github.nechaevv.isomorphic.react
+package com.github.nechaevv.isomorphic.api
 
 import org.scalajs.dom
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSGlobal, JSImport}
+import scala.scalajs.js.annotation.JSImport
 
 @js.native
 @JSImport("react-dom", JSImport.Default)

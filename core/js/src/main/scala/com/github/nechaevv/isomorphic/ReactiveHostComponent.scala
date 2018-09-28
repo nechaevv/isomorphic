@@ -1,16 +1,34 @@
-package com.github.nechaevv.isomorphic.dom
+package com.github.nechaevv.isomorphic
 
 import cats.effect.{ContextShift, IO}
-import com.github.nechaevv.isomorphic.{EventDispatcher, ReactPipeline, ReactiveWebComponent}
+import com.github.nechaevv.isomorphic.api.HTMLElementWithShadowRoot
 import org.scalajs.dom.raw.{HTMLElement, Node}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 
-class CustomElement[T <: ReactiveWebComponent](val webComponent: T) extends HTMLElement {
+trait ReactiveHostComponent {
+  type State <: AnyRef
+
+  def attributes: Iterable[String] = Seq.empty
+  def rootComponent: Component[State]
+  def initialState: State
+  def reducer: Reducer[State]
+  def effect: Effect[State]
+  def useShadowRoot: Boolean = false
+
+  def initEvent(properties: Iterable[(String, String)]): Any
+  def connectedEffect: Option[Any] = None
+  def disconnectedEffect: Option[Any] = None
+  def adoptedEffect: Option[Any] = None
+  def attributeChangedEffect(name: String, oldValue: String, newValue: String): Option[Any] = None
+
+}
+
+class ReactiveHostCustomElement[T <: ReactiveHostComponent](val webComponent: T) extends HTMLElement {
   implicit val defaultContextShift: ContextShift[IO] = IO.contextShift(global)
 
-  private var dispatcher: Option[EventDispatcher[webComponent.Event]] = None
+  private var dispatcher: Option[EventDispatcher] = None
 
   private val container: Node = if (webComponent.useShadowRoot)
     this.asInstanceOf[HTMLElementWithShadowRoot].attachShadow(js.Dynamic.literal("mode" → "open")) else this
@@ -35,7 +53,7 @@ class CustomElement[T <: ReactiveWebComponent](val webComponent: T) extends HTML
     dispatcher ← dispatcher
   } dispatcher.dispatch(event)
 
-  ReactPipeline.run[webComponent.Event, webComponent.State](
+  ReactPipeline.run[webComponent.State](
     container,
     webComponent.rootComponent,
     webComponent.reducer,
