@@ -12,9 +12,9 @@ object TaskEditComponent extends Component[Task] {
     val nameChange: EventHandler = e ⇒ dispatcher.dispatch(TaskEditNameEvent(e.target.asInstanceOf[HTMLInputElement].value))
     val completedChange: EventHandler = e ⇒ dispatcher.dispatch(TaskSetCompletedEvent(e.target.asInstanceOf[HTMLInputElement].checked))
     form(
-      input('type := "text", 'value := task.name, EventTypes.Change → nameChange),
-      input('type := "checkbox", 'checked := (if (task.completed) "checked" else "") , EventTypes.Change → completedChange),
-      button('type := "button", EventTypes.Click → save, "SAVE")
+      input('type := "text", 'value := task.name, DOMEventTypes.Change → nameChange),
+      input('type := "checkbox", 'checked := (if (task.completed) "checked" else "") , DOMEventTypes.Change → completedChange),
+      button('type := "button", DOMEventTypes.Click → save, "SAVE")
     )
   }
 }
