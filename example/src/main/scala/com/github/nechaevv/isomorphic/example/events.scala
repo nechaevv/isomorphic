@@ -1,6 +1,5 @@
 package com.github.nechaevv.isomorphic.example
 
-case object AppStartEvent
 case class TaskSelectEvent(index: Int)
 case object TaskSaveEvent
 case class TaskEditNameEvent(name: String)

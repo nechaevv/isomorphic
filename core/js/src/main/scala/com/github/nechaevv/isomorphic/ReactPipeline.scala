@@ -9,7 +9,7 @@ import org.scalajs.dom.Node
 object ReactPipeline {
   def run[AppState <: AnyRef](container: Node, appComponent: Component[AppState],
                               stateReducer: Reducer[AppState], effects: Effect[AppState], initialState: AppState,
-                              appStartEvent: Any, eventDispatcherCallback: EventDispatcher ⇒ Unit)
+                              eventDispatcherCallback: EventDispatcher ⇒ Unit)
                              (implicit concurrent: Concurrent[IO]): IO[Unit] = {
     val stream = for {
       eventStream ← Stream.eval(Queue.unbounded[IO, Any])
@@ -18,10 +18,10 @@ object ReactPipeline {
         eventDispatcherCallback(dispatcher)
         dispatcher
       }
-      events = eventStream.dequeue
-      reducerOutput ← events.scan((initialState, appStartEvent, true))((acc: (AppState, Any, Boolean), event: Any) ⇒ {
+      events = eventStream.dequeue.takeWhile(event ⇒ event != AppStopEvent, takeFailure = true)
+      reducerOutput ← events.scan[(AppState, Any, Boolean)]((initialState, AppStartEvent, true))((acc, event: Any) ⇒ {
         val (state, _, _) = acc
-        if (event == appStartEvent) acc
+        if (event == AppStartEvent) acc
         else if (stateReducer.isDefinedAt(event)) {
           val newState = stateReducer(event)(state)
           (newState, event, !(state eq newState))
@@ -40,3 +40,6 @@ object ReactPipeline {
     stream.compile.drain
   }
 }
+
+case object AppStartEvent
+case object AppStopEvent

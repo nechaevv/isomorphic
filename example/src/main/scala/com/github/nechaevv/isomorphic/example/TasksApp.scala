@@ -12,12 +12,10 @@ object TasksApp extends ReactiveHostComponent with AutonomousWebComponent {
 
   override def rootComponent: AppComponent.type = AppComponent
 
-  override def initialState: State = initialTasksState
+  override def initialState(properties: Iterable[(String, String)]): State = initialTasksState
 
   override def reducer: Reducer[State] = stateReducer
 
   override def effect: Effect[TasksState] = appEffect
-
-  override def initEvent(properties: Iterable[(String, String)]): Any = AppStartEvent
 
 }

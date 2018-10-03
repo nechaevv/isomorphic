@@ -1,7 +1,5 @@
 package com.github.nechaevv.isomorphic
 
-import java.text.AttributedCharacterIterator
-
 import api.{React, ReactElement}
 import frontend._
 
