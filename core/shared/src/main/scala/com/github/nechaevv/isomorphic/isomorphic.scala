@@ -30,8 +30,9 @@ package object isomorphic {
     def ++=(classNames: Iterable[String]): MultiModifier = MultiModifier(classNames.map(WithClass))
   }
 
-  implicit def autonomousWebComponentToTag(webComponent: AutonomousWebComponent): Tag = new Tag(webComponent.elementName)
+  implicit def autonomousWebComponentToTag(webComponent: AutonomousCustomElement): Tag = new Tag(webComponent.elementName)
 
-  implicit def extensionWebComponentToTag(webComponent: ExtensionWebComponent): Tag = new Tag(webComponent.extendedElement)
+  implicit def extensionWebComponentToTag(webComponent: ExtensionCustomElement): Tag = new Tag(webComponent.extendedElement)
     .append(Attribute("is", webComponent.elementName))
+
 }

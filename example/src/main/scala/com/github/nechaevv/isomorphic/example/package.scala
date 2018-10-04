@@ -33,6 +33,6 @@ package object example {
     case TaskSaveEvent ⇒ s ⇒ fs2.Stream(ShowMessage(s"Task ${s.tasks.length} saved"))
   }
 
-  implicit val tasksAppElementDef = new CustomElementDef[TasksApp.type](js.constructorOf[TasksAppReactiveHostCustomElement])
-  class TasksAppReactiveHostCustomElement extends ReactiveHostCustomElement(TasksApp)
+  class TasksAppStatefulHostCustomElement extends StatefulHostCustomElement(TasksApp)
+
 }

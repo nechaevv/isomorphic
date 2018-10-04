@@ -1,8 +1,8 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.{AutonomousWebComponent, Effect, ReactiveHostComponent, Reducer}
+import com.github.nechaevv.isomorphic.{AutonomousCustomElement, Effect, StatefulHostComponent, Reducer}
 
-object TasksApp extends ReactiveHostComponent with AutonomousWebComponent {
+object TasksApp extends StatefulHostComponent with AutonomousCustomElement {
 
   override type State = TasksState
 

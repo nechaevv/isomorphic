@@ -7,7 +7,7 @@ import org.scalajs.dom.raw.{HTMLElement, Node}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 
-trait ReactiveHostComponent {
+trait StatefulHostComponent {
   type State <: AnyRef
 
   def attributes: Iterable[String] = Seq.empty
@@ -23,7 +23,7 @@ trait ReactiveHostComponent {
 
 }
 
-class ReactiveHostCustomElement[T <: ReactiveHostComponent](val webComponent: T) extends HTMLElement {
+class StatefulHostCustomElement[T <: StatefulHostComponent](val webComponent: T) extends HTMLElement {
   implicit val defaultContextShift: ContextShift[IO] = IO.contextShift(global)
 
   private var dispatcher: Option[EventDispatcher] = None
