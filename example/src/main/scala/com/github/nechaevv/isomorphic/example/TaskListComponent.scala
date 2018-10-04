@@ -10,7 +10,9 @@ object TaskListComponent extends Component[Seq[Task]] {
      for ((task, index) ← tasks.zipWithIndex) yield {
        val click: EventHandler = e ⇒ dispatcher.dispatch(TaskSelectEvent(index))
        li(
-         'class := (if(task.completed) "completed" else "uncompleted"), DOMEventTypes.Click → click, task.name
+         classes += (if(task.completed) "completed" else "uncompleted"),
+         DOMEventTypes.Click → click,
+         task.name
        )
      }
    )

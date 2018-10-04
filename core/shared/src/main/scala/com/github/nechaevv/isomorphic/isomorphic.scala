@@ -10,15 +10,13 @@ package object isomorphic {
   type Reducer[S] = PartialFunction[Any, S ⇒ S]
   type Effect[S] = PartialFunction[Any, S ⇒ Stream[IO, Any]]
 
-  implicit class PimpedSymbol(s: Symbol) {
-    def :=(value: String) : Attribute = Attribute(s.name, value)
-    def :?(value: Boolean) : MultiModifier = MultiModifier(if (value) Seq(Attribute(s.name, s.name)) else Seq.empty[Attribute])
-  }
-
   implicit class PimpedString(s: String) {
     def :=(value: String) : Attribute = Attribute(s, value)
+    def :=(value: Boolean) : Attribute = Attribute(s, if (value) "true" else "false")
     def :?(value: Boolean) : MultiModifier = MultiModifier(if (value) Seq(Attribute(s, s)) else Seq.empty[Attribute])
   }
+
+  implicit class PimpedSymbol(s: Symbol) extends PimpedString(s.name)
 
   implicit def childElementModifier(element: Element) : ChildElement = ChildElement(element)
   implicit def childTextModifier(text: String): ChildElement = ChildElement(new Element {
@@ -26,6 +24,11 @@ package object isomorphic {
   })
   implicit def modifierIterableImplicit[T](mods: Iterable[T])(implicit conv: T ⇒ ElementModifier): MultiModifier = MultiModifier(mods.map(conv))
   implicit def modifierOptionImplicit[T](mod: Option[T])(implicit conv: T ⇒ ElementModifier): MultiModifier = MultiModifier(mod.map(conv))
+
+  object classes {
+    def +=(className: String): WithClass = WithClass(className)
+    def ++=(classNames: Iterable[String]): MultiModifier = MultiModifier(classNames.map(WithClass))
+  }
 
   implicit def autonomousWebComponentToTag(webComponent: AutonomousWebComponent): Tag = new Tag(webComponent.elementName)
 

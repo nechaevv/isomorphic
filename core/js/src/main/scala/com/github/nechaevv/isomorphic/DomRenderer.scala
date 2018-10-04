@@ -6,13 +6,16 @@ import org.scalajs.dom.{Node, document}
 object DomRenderer extends Renderer[Node] {
   override def element(name: String, modifiers: ElementModifier*): Node = {
     val node = document.createElement(name)
+    var classes: Seq[String] = Seq.empty
     def parseModifiers(mods: ElementModifier*): Unit = mods foreach {
       case Attribute(n, v) ⇒ node.setAttribute(n, v)
       case EventListener(e, h) ⇒ node.addEventListener(e.name.toLowerCase, h, e.isCapturing)
       case ChildElement(e) ⇒ node.appendChild(e(this))
+      case WithClass(className) ⇒ classes = classes :+ className
       case MultiModifier(mm) ⇒ parseModifiers(mm)
     }
     parseModifiers(modifiers)
+    if (classes.nonEmpty) node.setAttribute("class", classes.mkString(" "))
     node
   }
 

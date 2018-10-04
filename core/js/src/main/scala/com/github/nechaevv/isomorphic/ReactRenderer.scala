@@ -12,13 +12,16 @@ object ReactRenderer extends Renderer[ReactElement] {
     val isCustomElement = name.contains("-") || modifiers.exists(m ⇒ m.isInstanceOf[Attribute] && m.asInstanceOf[Attribute].name == "is")
     val props = Dictionary.empty[js.Any]
     var childElements: Seq[ReactElement] = Seq.empty
+    var classes: Seq[String] = Seq.empty
     def parseModifiers(mods: Iterable[ElementModifier]): Unit = mods foreach {
       case Attribute(n, v) ⇒ props(mapAttributeName(n, isCustomElement)) = v
       case EventListener(e, h) ⇒ props("on" + e.name) = h
       case ChildElement(e) ⇒ childElements = childElements :+ e(this)
       case MultiModifier(mm) ⇒ parseModifiers(mm)
+      case WithClass(className) ⇒ classes = classes :+ className
     }
     parseModifiers(modifiers)
+    if (classes.nonEmpty) props(mapAttributeName("class", isCustomElement)) = classes.mkString(" ")
     React.createElement(name, props, childElements:_*)
   }
 

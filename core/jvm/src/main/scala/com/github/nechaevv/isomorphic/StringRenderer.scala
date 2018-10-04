@@ -2,18 +2,21 @@ package com.github.nechaevv.isomorphic
 
 object StringRenderer extends Renderer[String] {
   override def element(name: String, modifiers: ElementModifier*): String = {
-    def parseModifiers(mods: Iterable[ElementModifier]): (Seq[String], Seq[String]) = modifiers.foldLeft(Seq.empty[String], Seq.empty[String])((acc, modifier) ⇒ {
-      val (attributes, children) = acc
+    def parseModifiers(mods: Iterable[ElementModifier]): (Seq[String], Seq[String], Seq[String]) = modifiers
+      .foldLeft(Seq.empty[String], Seq.empty[String], Seq.empty[String])((acc, modifier) ⇒ {
+      val (attributes, children, classes) = acc
       modifier match {
-        case Attribute(n, v) ⇒ (attributes :+ s""""$n"="$v"""", children)
-        case ChildElement(e) ⇒ (attributes, children :+ e(this))
+        case Attribute(n, v) ⇒ (attributes :+ s""""$n"="$v"""", children, classes)
+        case ChildElement(e) ⇒ (attributes, children :+ e(this), classes)
+        case WithClass(className) ⇒ (attributes, children, classes :+ className)
         case MultiModifier(mm) ⇒
-          val (na, nc) = parseModifiers(mm)
-          (attributes ++ na, children ++ nc)
+          val (na, nc, ncc) = parseModifiers(mm)
+          (attributes ++ na, children ++ nc, classes ++ ncc)
       }
     })
-    val (attributes, children) = parseModifiers(modifiers)
-    s"<$name ${attributes.mkString(" ")}>${children.mkString("")}</$name>"
+    val (attributes, children, classes) = parseModifiers(modifiers)
+    val classAttribute = if (classes.isEmpty) None else Some("class=\"" + classes.mkString(" ") + "\"")
+    s"<$name ${(attributes ++ classAttribute).mkString(" ")}>${children.mkString("")}</$name>"
   }
 
   override def fragment(contents: String*): String = contents.mkString("")
