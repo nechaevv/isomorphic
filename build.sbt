@@ -29,12 +29,19 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
   )
   .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
 
+val monocleVersion = "1.5.1-cats"
+
 lazy val example = project.in(file("example"))
   .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
   .settings(sharedSettings ++ Seq(
     name := "example",
+    libraryDependencies ++= Seq(
+      "com.github.julien-truffaut" %%%  "monocle-core"  % monocleVersion,
+      "com.github.julien-truffaut" %%%  "monocle-macro" % monocleVersion
+    ), 
     scalaJSUseMainModuleInitializer := true,
     scalacOptions += "-P:scalajs:sjsDefinedByDefault",
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     scalaJSOutputMode := ECMAScript6,
     webpackBundlingMode := BundlingMode.LibraryOnly()
   ))
