@@ -3,9 +3,11 @@ package com.github.nechaevv.isomorphic.example
 import com.github.nechaevv.isomorphic.CustomElements
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Main {
-  def main(args: Array[String]): Unit = {
+  @JSExportTopLevel("boot")
+  def boot(): Unit = {
     CustomElements.define(TasksApp, js.constructorOf[TasksAppStatefulHostCustomElement])
   }
 }

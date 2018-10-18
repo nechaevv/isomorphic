@@ -1,4 +1,4 @@
-import org.scalajs.core.tools.linker.backend.OutputMode.ECMAScript6
+import org.scalajs.core.tools.linker.backend.OutputMode
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 val sharedSettings = Seq(
@@ -30,20 +30,24 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
   .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
 
 val monocleVersion = "1.5.1-cats"
+val circeVersion = "0.9.3"
 
 lazy val example = project.in(file("example"))
-  .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
+  .enablePlugins(ScalaJSPlugin)
   .settings(sharedSettings ++ Seq(
     name := "example",
     libraryDependencies ++= Seq(
+      "io.circe" %%% "circe-core" % circeVersion,
+      "io.circe" %%% "circe-generic" % circeVersion,
+      "io.circe" %%% "circe-parser" % circeVersion,
       "com.github.julien-truffaut" %%%  "monocle-core"  % monocleVersion,
-      "com.github.julien-truffaut" %%%  "monocle-macro" % monocleVersion
+      "com.github.julien-truffaut" %%%  "monocle-macro" % monocleVersion,
+      "com.github.julien-truffaut" %%%  "monocle-law"   % monocleVersion % "test"
     ), 
-    scalaJSUseMainModuleInitializer := true,
-    scalacOptions += "-P:scalajs:sjsDefinedByDefault",
+    scalacOptions ++= Seq("-P:scalajs:sjsDefinedByDefault", "-feature"),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-    scalaJSOutputMode := ECMAScript6,
-    webpackBundlingMode := BundlingMode.LibraryOnly()
+    scalaJSOutputMode := OutputMode.ECMAScript6,
+    scalaJSModuleKind := ModuleKind.CommonJSModule
   ))
   .dependsOn(core.js)
 
