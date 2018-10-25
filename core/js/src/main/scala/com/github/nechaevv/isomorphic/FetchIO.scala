@@ -3,7 +3,7 @@ package com.github.nechaevv.isomorphic
 import cats.effect.IO
 import io.circe._
 import io.circe.parser._
-import org.scalajs.dom.experimental.Response
+import org.scalajs.dom.experimental.{HeadersInit, Response}
 
 import scala.language.implicitConversions
 import scala.scalajs.js
@@ -23,6 +23,8 @@ object FetchIO {
     def as[T](implicit decoder: Decoder[T]): IO[T] = responsePromiseToTextIO(promise)
       .flatMap(responseText ⇒ decode[T](responseText).fold(error ⇒ IO.raiseError(error), v ⇒ IO.pure(v)))
   }
+
+  val jsonContentType: HeadersInit = js.Dictionary("Content-Type" → "application/json")
 
 }
 

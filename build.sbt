@@ -4,7 +4,7 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 val sharedSettings = Seq(
   organization := "com.github.nechaevv.isomorphic",
   version := "0.1-SNAPSHOT",
-  scalaVersion := "2.12.6"
+  scalaVersion := "2.12.7"
 )
 
 val reactVersion   = "16.5.0"
