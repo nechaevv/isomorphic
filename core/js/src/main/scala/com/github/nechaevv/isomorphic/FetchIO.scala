@@ -21,7 +21,7 @@ object FetchIO {
 
   implicit class decodableTextPromise(promise: js.Promise[Response]) {
     def as[T](implicit decoder: Decoder[T]): IO[T] = responsePromiseToTextIO(promise)
-      .flatMap(responseText ⇒ decode[T](responseText).fold(error ⇒ IO.raiseError(error), v ⇒ IO.pure(v)))
+      .flatMap(responseText ⇒ decode[T](responseText).fold(IO.raiseError, IO.pure))
   }
 
   val jsonContentType: HeadersInit = js.Dictionary("Content-Type" → "application/json")
