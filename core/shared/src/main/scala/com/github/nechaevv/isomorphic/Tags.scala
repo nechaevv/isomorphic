@@ -41,6 +41,10 @@ object Tags {
   val section = new Tag("section")
   val select = new Tag("select")
   val span = new Tag("span")
+  val table = new Tag("table")
+  val td = new Tag("td")
+  val th = new Tag("th")
+  val tr = new Tag("tr")
   val ul = new Tag("ul")
 
 }
