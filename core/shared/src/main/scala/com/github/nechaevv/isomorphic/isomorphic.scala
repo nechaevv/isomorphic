@@ -6,7 +6,7 @@ import fs2.Stream
 import scala.language.implicitConversions
 
 package object isomorphic {
-  type Component[S] = (S, EventDispatcher) ⇒ Element
+  type Component[S] = S ⇒ Element
   type Reducer[S] = PartialFunction[Any, S ⇒ S]
   type Effect[S] = PartialFunction[Any, S ⇒ Stream[IO, Any]]
 

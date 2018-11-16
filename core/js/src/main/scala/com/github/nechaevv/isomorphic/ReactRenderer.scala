@@ -2,11 +2,12 @@ package com.github.nechaevv.isomorphic
 
 import api.{React, ReactElement}
 import frontend._
+import org.scalajs.dom.Event
 
 import scala.scalajs.js
 import scala.scalajs.js.Dictionary
 
-object ReactRenderer extends Renderer[ReactElement] {
+class ReactRenderer(eventDispatcher: EventDispatcher) extends Renderer[ReactElement] {
 
   override def element(name: String, modifiers: ElementModifier*): ReactElement = {
     val isCustomElement = name.contains("-") || modifiers.exists(m ⇒ m.isInstanceOf[Attribute] && m.asInstanceOf[Attribute].name == "is")
@@ -15,7 +16,7 @@ object ReactRenderer extends Renderer[ReactElement] {
     var classes: Seq[String] = Seq.empty
     def parseModifiers(mods: Iterable[ElementModifier]): Unit = mods foreach {
       case Attribute(n, v) ⇒ props(mapAttributeName(n, isCustomElement)) = v
-      case EventListener(e, h) ⇒ props("on" + e.name) = h
+      case EventListener(e, h) ⇒ props("on" + e.name) = (e: Event) ⇒ h(e).foreach(eventDispatcher.dispatch)
       case ChildElement(e) ⇒ childElements = childElements :+ e(this)
       case MultiModifier(mm) ⇒ parseModifiers(mm)
       case WithClass(className) ⇒ classes = classes :+ className
