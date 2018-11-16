@@ -26,34 +26,32 @@ trait StatefulHostComponent {
 class StatefulHostCustomElement[T <: StatefulHostComponent](val webComponent: T) extends HTMLElement {
   implicit val defaultContextShift: ContextShift[IO] = IO.contextShift(global)
 
-  private var dispatcher: Option[EventDispatcher] = None
+  private var eventStream: Option[EventStream] = None
+  private def sendEvent(event: Any): Unit = eventStream.foreach(_.enqueue1(event).unsafeRunSync())
 
   private val container: Node = if (webComponent.useShadowRoot)
     this.asInstanceOf[HTMLElementWithShadowRoot].attachShadow(js.Dynamic.literal("mode" → "open")) else this
 
-  def connectedCallback(): Unit = ReactPipeline.run[webComponent.State](
-    container,
-    webComponent.rootComponent,
-    webComponent.reducer,
-    webComponent.effect,
-    webComponent.initialState(webComponent.attributes.map(attribute ⇒ attribute → getAttribute(attribute))),
-    eventDispatcher ⇒ this.dispatcher = Some(eventDispatcher)
-  ).unsafeRunAsyncAndForget()
-
-  def disconnectedCallback(): Unit = {
-    dispatcher.foreach(_.dispatch(AppStopEvent))
-    dispatcher = None
+  def connectedCallback(): Unit = {
+    ReactPipeline.run[webComponent.State](
+      container,
+      webComponent.rootComponent,
+      webComponent.reducer,
+      webComponent.effect,
+      webComponent.initialState(webComponent.attributes.map(attribute ⇒ attribute → getAttribute(attribute))),
+    ).map(es ⇒ eventStream = Some(es)).unsafeRunAsyncAndForget()
   }
 
-  def adoptedCallback(): Unit = for {
-    event ← webComponent.adoptedEffect
-    dispatcher ← dispatcher
-  } dispatcher.dispatch(event)
+  def disconnectedCallback(): Unit = {
+    sendEvent(AppStopEvent)
+    eventStream = None
+  }
 
-  def attributeChangedCallback(name: String, oldValue: String, newValue: String): Unit = for {
-    event ← webComponent.attributeChangedEffect(name, oldValue, newValue)
-    dispatcher ← dispatcher
-  } dispatcher.dispatch(event)
+  def adoptedCallback(): Unit = sendEvent(webComponent.adoptedEffect)
+
+  def attributeChangedCallback(name: String, oldValue: String, newValue: String): Unit = {
+    sendEvent(webComponent.attributeChangedEffect(name, oldValue, newValue))
+  }
 
 
 }

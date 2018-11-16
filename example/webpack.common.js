@@ -9,11 +9,11 @@ module.exports = {
   },
   module: {
 
-    rules: [/*{
+    rules: [{
       test: /\.js$/,
       enforce: "pre",
       use: ["source-map-loader"]
-    }, */{
+    }, {
       test: /\.scss$/,
       use: [
         {loader: MiniCssExtractPlugin.loader},

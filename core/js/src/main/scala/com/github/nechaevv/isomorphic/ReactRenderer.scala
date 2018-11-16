@@ -7,7 +7,7 @@ import org.scalajs.dom.Event
 import scala.scalajs.js
 import scala.scalajs.js.Dictionary
 
-class ReactRenderer(eventDispatcher: EventDispatcher) extends Renderer[ReactElement] {
+class ReactRenderer(eventStream: EventStream) extends Renderer[ReactElement] {
 
   override def element(name: String, modifiers: ElementModifier*): ReactElement = {
     val isCustomElement = name.contains("-") || modifiers.exists(m ⇒ m.isInstanceOf[Attribute] && m.asInstanceOf[Attribute].name == "is")
@@ -16,7 +16,7 @@ class ReactRenderer(eventDispatcher: EventDispatcher) extends Renderer[ReactElem
     var classes: Seq[String] = Seq.empty
     def parseModifiers(mods: Iterable[ElementModifier]): Unit = mods foreach {
       case Attribute(n, v) ⇒ props(mapAttributeName(n, isCustomElement)) = v
-      case EventListener(e, h) ⇒ props("on" + e.name) = (e: Event) ⇒ h(e).foreach(eventDispatcher.dispatch)
+      case EventListener(e, h) ⇒ props("on" + e.name) = (e: Event) ⇒ h(e).through(eventStream.enqueue).compile.drain.unsafeRunAsyncAndForget()
       case ChildElement(e) ⇒ childElements = childElements :+ e(this)
       case MultiModifier(mm) ⇒ parseModifiers(mm)
       case WithClass(className) ⇒ classes = classes :+ className

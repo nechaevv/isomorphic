@@ -7,13 +7,14 @@ import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement
 
 object TaskEditComponent extends Component[Task] {
-  def apply(task: Task, dispatcher: EventDispatcher): Element = {
-    def nameChange(e: Event) = TaskEditNameEvent(e.target.asInstanceOf[HTMLInputElement].value)
-    def completedChange(e: Event) = TaskSetCompletedEvent(e.target.asInstanceOf[HTMLInputElement].checked)
+  def apply(task: Task): Element = {
+    val nameController = DOMEventTypes.Change → ((e: Event) ⇒ fs2.Stream(TaskEditNameEvent(e.target.asInstanceOf[HTMLInputElement].value)))
+    val completedController = DOMEventTypes.Change → ((e: Event) ⇒ fs2.Stream(TaskSetCompletedEvent(e.target.asInstanceOf[HTMLInputElement].checked)))
+    val saveController = DOMEventTypes.Click → ((e: Event) ⇒ fs2.Stream(TaskSaveEvent))
     form(
-      input('type := "text", 'value := task.name, DOMEventTypes.Change → nameChange),
-      input('type := "checkbox", 'checked := (if (task.completed) "checked" else "") , DOMEventTypes.Change → completedChange),
-      button('type := "button", DOMEventTypes.Click → TaskSaveEvent, "SAVE")
+      input('type := "text", 'value := task.name, nameController),
+      input('type := "checkbox", 'checked := (if (task.completed) "checked" else ""), completedController),
+      button('type := "button", "SAVE", saveController)
     )
   }
 }

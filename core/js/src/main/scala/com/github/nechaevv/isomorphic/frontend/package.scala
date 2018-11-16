@@ -1,14 +1,15 @@
 package com.github.nechaevv.isomorphic
 
+import cats.effect.IO
 import org.scalajs.dom.Event
 
+import scala.language.implicitConversions
+
 package object frontend {
-  type EventHandler = Event ⇒ Iterable[Any]
+  type EventHandler = Event ⇒ fs2.Stream[IO, Any]
 
   implicit class PimpedEventType(eventType: DOMEventType) {
-    def ->>(handler: Event ⇒ Iterable[Any]): EventListener = EventListener(eventType, handler)
-    def →(handler: Event ⇒ Any): EventListener = EventListener(eventType, Some(_))
-    def →(action: Any): EventListener = EventListener(eventType, _ ⇒ Some(action))
+    def → (handler: EventHandler): EventListener = EventListener(eventType, handler)
   }
 
 }

@@ -2,6 +2,7 @@ package com.github.nechaevv
 
 import cats.effect.IO
 import fs2.Stream
+import fs2.concurrent.Queue
 
 import scala.language.implicitConversions
 
@@ -9,6 +10,7 @@ package object isomorphic {
   type Component[S] = S ⇒ Element
   type Reducer[S] = PartialFunction[Any, S ⇒ S]
   type Effect[S] = PartialFunction[Any, S ⇒ Stream[IO, Any]]
+  type EventStream = Queue[IO, Any]
 
   implicit class PimpedString(s: String) {
     def :=(value: String) : Attribute = Attribute(s, value)

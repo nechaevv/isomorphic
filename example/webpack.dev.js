@@ -12,7 +12,7 @@ module.exports = merge(common, {
     path: path.resolve(__dirname, "target", "development"),
     filename: "[name].js"
   },
-  devtool: 'inline-source-map',
+  devtool: 'source-map',
   devServer: {
     https: true,
     contentBase: './src/main/assets',

@@ -1,14 +1,13 @@
 package com.github.nechaevv.isomorphic.example
 
+import com.github.nechaevv.isomorphic.Tags._
 import com.github.nechaevv.isomorphic._
-import com.github.nechaevv.isomorphic.frontend._
-import Tags._
 
 object AppComponent extends Component[TasksState] {
-  override def apply(state: TasksState, events: EventDispatcher): Element = {
+  override def apply(state: TasksState): Element = {
     div(
-      TaskListComponent(state.tasks, events),
-      TaskEditComponent(state.editingTask, events),
+      TaskListComponent(state.tasks),
+      TaskEditComponent(state.editingTask),
       state.message.map(msg ⇒ p(msg))
     )
   }

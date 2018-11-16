@@ -1,7 +1,5 @@
 package com.github.nechaevv.isomorphic
 
-import scala.scalajs.js
-
 package object example {
   val initialTasksState = TasksState(
     tasks = Seq(
