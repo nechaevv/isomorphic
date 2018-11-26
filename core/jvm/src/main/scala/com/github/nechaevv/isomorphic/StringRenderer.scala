@@ -6,7 +6,7 @@ object StringRenderer extends Renderer[String] {
       .foldLeft(Seq.empty[String], Seq.empty[String], Seq.empty[String])((acc, modifier) ⇒ {
       val (attributes, children, classes) = acc
       modifier match {
-        case Attribute(n, v) ⇒ (attributes :+ s""""$n"="$v"""", children, classes)
+        case Attribute(n, v) ⇒ (attributes :+ s""""${n.toLowerCase}"="$v"""", children, classes)
         case ChildElement(e) ⇒ (attributes, children :+ e(this), classes)
         case WithClass(className) ⇒ (attributes, children, classes :+ className)
         case MultiModifier(mm) ⇒
