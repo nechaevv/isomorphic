@@ -7,7 +7,7 @@ import org.scalajs.dom.Event
 import scala.scalajs.js
 import scala.scalajs.js.Dictionary
 
-class ReactRenderer(eventStream: EventStream) extends Renderer[ReactElement] {
+class ReactRenderer(eventStream: EventDispatcher) extends Renderer[ReactElement] {
 
   override def element(name: String, modifiers: ElementModifier*): ReactElement = {
     val isCustomElement = name.contains("-") || modifiers.exists(m ⇒ m.isInstanceOf[Attribute] && m.asInstanceOf[Attribute].name == "is")

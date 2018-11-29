@@ -3,7 +3,7 @@ package com.github.nechaevv.isomorphic
 import com.github.nechaevv.isomorphic.frontend._
 import org.scalajs.dom.{Event, Node, document}
 
-class DomRenderer(eventStream: EventStream)  extends Renderer[Node] {
+class DomRenderer(eventStream: EventDispatcher)  extends Renderer[Node] {
   override def element(name: String, modifiers: ElementModifier*): Node = {
     val node = document.createElement(name)
     var classes: Seq[String] = Seq.empty

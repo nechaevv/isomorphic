@@ -1,6 +1,6 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.{AutonomousCustomElement, Effect, StatefulHostComponent, Reducer}
+import com.github.nechaevv.isomorphic.{AutonomousCustomElement, StatefulHostComponent}
 
 object TasksApp extends StatefulHostComponent with AutonomousCustomElement {
 
@@ -14,8 +14,8 @@ object TasksApp extends StatefulHostComponent with AutonomousCustomElement {
 
   override def initialState(properties: Iterable[(String, String)]): State = initialTasksState
 
-  override def reducer: Reducer[State] = stateReducer
+  override def reducer = stateReducer
 
-  override def effect: Effect[TasksState] = appEffect
+  override def effect = appEffect
 
 }

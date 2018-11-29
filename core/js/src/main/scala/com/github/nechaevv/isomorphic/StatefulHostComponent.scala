@@ -13,8 +13,8 @@ trait StatefulHostComponent {
   def attributes: Iterable[String] = Seq.empty
   def rootComponent: Component[State]
   def initialState(properties: Iterable[(String, String)]): State
-  def reducer: Reducer[State]
-  def effect: Effect[State]
+  def reducer: Any ⇒ State ⇒ State
+  def effect: Any ⇒ State ⇒ EventStream
   def useShadowRoot: Boolean = false
 
   def connectedEffect: Option[Any] = None
@@ -26,7 +26,7 @@ trait StatefulHostComponent {
 class StatefulHostCustomElement[T <: StatefulHostComponent](val webComponent: T) extends HTMLElement {
   implicit val defaultContextShift: ContextShift[IO] = IO.contextShift(global)
 
-  private var eventStream: Option[EventStream] = None
+  private var eventStream: Option[EventDispatcher] = None
   private def sendEvent(event: Any): Unit = eventStream.foreach(_.enqueue1(event).unsafeRunSync())
 
   private val container: Node = if (webComponent.useShadowRoot)

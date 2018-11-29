@@ -8,7 +8,7 @@ import org.scalajs.dom.Node
 
 object ReactPipeline {
   def run[AppState <: AnyRef](container: Node, appComponent: Component[AppState],
-                              stateReducer: Reducer[AppState], effects: Effect[AppState], initialState: AppState)
+                              stateReducer: Any ⇒ AppState ⇒ AppState, effects: Any ⇒ AppState ⇒ EventStream, initialState: AppState)
                              (implicit concurrent: Concurrent[IO]): IO[Queue[IO, Any]] = for {
     eventStream ← Queue.unbounded[IO, Any]
     renderer = new ReactRenderer(eventStream)

@@ -11,7 +11,7 @@ package object example {
     message = None
   )
 
-  def stateReducer: Reducer[TasksState] = combineReducers(Seq({
+  val stateReducer = combineReducers[TasksState](Seq({
     case TaskSelectEvent(taskIndex) ⇒ s ⇒
          s.copy(editingTask = s.tasks(taskIndex), editingIndex = Some(taskIndex))
     case TaskEditNameEvent(name) ⇒ (TasksState.editingTask composeLens Task.name).set(name)
@@ -25,7 +25,7 @@ package object example {
     case ShowMessage(msg) ⇒ TasksState.message.set(Some(msg))
   }))
 
-  def appEffect: Effect[TasksState] = combineEffects(Seq({
+  val appEffect = combineEffects[TasksState](Seq({
     case TaskSaveEvent ⇒ s ⇒ fs2.Stream(ShowMessage(s"Task ${s.tasks.length} saved"))
   }))
 
