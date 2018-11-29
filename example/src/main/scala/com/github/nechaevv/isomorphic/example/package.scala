@@ -11,7 +11,7 @@ package object example {
     message = None
   )
 
-  val stateReducer = combineReducers[TasksState](Seq({
+  val stateReducer = combineReducers[TasksState]({
     case TaskSelectEvent(taskIndex) ⇒ s ⇒
          s.copy(editingTask = s.tasks(taskIndex), editingIndex = Some(taskIndex))
     case TaskEditNameEvent(name) ⇒ (TasksState.editingTask composeLens Task.name).set(name)
@@ -23,11 +23,11 @@ package object example {
         editingIndex = None
       )
     case ShowMessage(msg) ⇒ TasksState.message.set(Some(msg))
-  }))
+  })
 
-  val appEffect = combineEffects[TasksState](Seq({
+  val appEffect = combineEffects[TasksState]({
     case TaskSaveEvent ⇒ s ⇒ fs2.Stream(ShowMessage(s"Task ${s.tasks.length} saved"))
-  }))
+  })
 
   class TasksAppStatefulHostCustomElement extends StatefulHostCustomElement(TasksApp)
 

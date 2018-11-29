@@ -38,11 +38,11 @@ package object isomorphic {
   implicit def extensionWebComponentToTag(webComponent: ExtensionCustomElement): Tag = new Tag(webComponent.extendedElement)
     .append(Attribute("is", webComponent.elementName))
 
-  def combineReducers[S](reducers: TraversableOnce[Reducer[S]]): Any ⇒ S ⇒ S = event ⇒ state ⇒ {
+  def combineReducers[S](reducers: Reducer[S]*): Any ⇒ S ⇒ S = event ⇒ state ⇒ {
     reducers.foldLeft(state)((s, reducer) ⇒ if (reducer.isDefinedAt(event)) reducer(event)(s) else s)
   }
 
-  def combineEffects[S](effects: TraversableOnce[Effect[S]]): Any ⇒ S ⇒ EventStream = event ⇒ state ⇒ {
+  def combineEffects[S](effects: Effect[S]*): Any ⇒ S ⇒ EventStream = event ⇒ state ⇒ {
     effects.foldLeft[fs2.Stream[IO, Any]](fs2.Stream.empty)((s, effect) ⇒ {
       if (effect.isDefinedAt(event)) s ++ effect(event)(state) else s
     })
