@@ -8,8 +8,8 @@ import scala.language.implicitConversions
 
 package object isomorphic {
   type Component[S] = S ⇒ Element
-  type Reducer[S] = PartialFunction[Any, S ⇒ S]
-  type Effect[S] = PartialFunction[Any, S ⇒ Stream[IO, Any]]
+  type Reducer[S] = Any ⇒ S ⇒ S
+  type Effect[S] = Any ⇒ S ⇒ Stream[IO, Any]
   type EventStream = Queue[IO, Any]
 
   implicit class PimpedString(s: String) {
@@ -36,5 +36,15 @@ package object isomorphic {
 
   implicit def extensionWebComponentToTag(webComponent: ExtensionCustomElement): Tag = new Tag(webComponent.extendedElement)
     .append(Attribute("is", webComponent.elementName))
+
+  def combineReducers[S](reducers: TraversableOnce[PartialFunction[Any, S ⇒ S]]): Reducer[S] = event ⇒ state ⇒ {
+    reducers.foldLeft(state)((s, reducer) ⇒ if (reducer.isDefinedAt(event)) reducer(event)(s) else s)
+  }
+
+  def combineEffects[S](effects: TraversableOnce[PartialFunction[Any, S ⇒ fs2.Stream[IO, Any]]]): Effect[S] = event ⇒ state ⇒ {
+    effects.foldLeft[fs2.Stream[IO, Any]](fs2.Stream.empty)((s, effect) ⇒ {
+      if (effect.isDefinedAt(event)) s ++ effect(event)(state) else s
+    })
+  }
 
 }

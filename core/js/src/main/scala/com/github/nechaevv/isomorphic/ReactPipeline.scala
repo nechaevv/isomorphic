@@ -17,20 +17,19 @@ object ReactPipeline {
       reducerOutput ← events.scan[(AppState, Any, Boolean)]((initialState, AppStartEvent, true))((acc, event: Any) ⇒ {
         val (state, _, _) = acc
         if (event == AppStartEvent) acc
-        else if (stateReducer.isDefinedAt(event)) {
+        else {
           val newState = stateReducer(event)(state)
           (newState, event, !(state eq newState))
         }
-        else  (state, event, false)
       })
       (state, event, hasChanged) = reducerOutput
       renderStream = if (hasChanged) Stream.eval(IO {
         val reactComponent = appComponent(state)(renderer)
         ReactDOM.render(reactComponent, container)
-      } ) else Stream.empty
-      effectStream = if (effects.isDefinedAt(event)) Stream.eval(
-        concurrent.start(effects(event)(state).through(eventStream.enqueue).compile.drain)
-      ) else Stream.empty
+      }) else Stream.empty
+      effectStream = Stream.eval(concurrent.start(
+        effects(event)(state).through(eventStream.enqueue).compile.drain
+      ))
       _ ← renderStream ++ effectStream
     } yield ()).compile.drain
   } yield eventStream
