@@ -12,6 +12,7 @@ class DomRenderer(eventStream: EventDispatcher)  extends Renderer[Node] {
       case EventListener(e, h) ⇒ node.addEventListener(e.name.toLowerCase,
         (e: Event) ⇒ h(e).through(eventStream.enqueue).compile.drain.unsafeRunAsyncAndForget(), e.isCapturing)
       case ChildElement(e) ⇒ node.appendChild(e(this))
+      case ChildComponent(c, s) ⇒ node.appendChild(c(s)(this))
       case WithClass(className) ⇒ classes = classes :+ className
       case MultiModifier(mm) ⇒ parseModifiers(mm)
     }

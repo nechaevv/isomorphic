@@ -21,6 +21,10 @@ package object isomorphic {
 
   implicit class PimpedSymbol(s: Symbol) extends PimpedString(s.name)
 
+  implicit class PimpedComponent[S](c: Component[S]) {
+    def << (state: S): ChildComponent[S] = ChildComponent(c, state)
+  }
+
   implicit def childElementModifier(element: Element) : ChildElement = ChildElement(element)
   implicit def childTextModifier(text: String): ChildElement = ChildElement(new Element {
     override def apply[E](renderer: Renderer[E]): E = renderer.text(text)

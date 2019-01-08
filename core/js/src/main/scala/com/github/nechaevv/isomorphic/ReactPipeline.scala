@@ -29,6 +29,7 @@ object ReactPipeline {
       }) else Stream.empty
       effectStream = Stream.eval(concurrent.start(
         effects(event)(state).through(eventStream.enqueue).compile.drain
+          .handleErrorWith(err ⇒ IO(err.printStackTrace()))
       ))
       _ ← renderStream ++ effectStream
     } yield ()).compile.drain

@@ -18,6 +18,7 @@ class ReactRenderer(eventStream: EventDispatcher) extends Renderer[ReactElement]
       case Attribute(n, v) ⇒ props(mapAttributeName(n, isCustomElement)) = v
       case EventListener(e, h) ⇒ props("on" + e.name) = (e: Event) ⇒ h(e).through(eventStream.enqueue).compile.drain.unsafeRunAsyncAndForget()
       case ChildElement(e) ⇒ childElements = childElements :+ e(this)
+      case ChildComponent(c, s) ⇒ childElements = childElements :+ c(s)(this)
       case MultiModifier(mm) ⇒ parseModifiers(mm)
       case WithClass(className) ⇒ classes = classes :+ className
     }

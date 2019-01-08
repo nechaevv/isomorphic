@@ -8,6 +8,7 @@ object StringRenderer extends Renderer[String] {
       modifier match {
         case Attribute(n, v) ⇒ (attributes :+ s""""${n.toLowerCase}"="$v"""", children, classes)
         case ChildElement(e) ⇒ (attributes, children :+ e(this), classes)
+        case ChildComponent(c, s) ⇒ (attributes, children :+ c(s)(this), classes)
         case WithClass(className) ⇒ (attributes, children, classes :+ className)
         case MultiModifier(mm) ⇒
           val (na, nc, ncc) = parseModifiers(mm)
