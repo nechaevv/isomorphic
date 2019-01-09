@@ -5,8 +5,8 @@ import com.github.nechaevv.isomorphic.frontend._
 import Tags._
 import org.scalajs.dom.Event
 
-object TaskListComponent extends Component[Seq[Task]] {
- def apply(tasks: Seq[Task]): Element = {
+object TaskListComponent {
+ def apply(): Component[Seq[Task]] = { tasks ⇒
    ul(
      for ((task, index) ← tasks.zipWithIndex) yield {
        val taskListController = DOMEventTypes.Click → ((e: Event) ⇒ fs2.Stream(TaskSelectEvent(index)))

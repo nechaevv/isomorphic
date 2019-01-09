@@ -6,8 +6,8 @@ import Tags._
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement
 
-object TaskEditComponent extends Component[Task] {
-  def apply(task: Task): Element = {
+object TaskEditComponent {
+  def apply(): Component[Task] = { task ⇒
     val nameController = DOMEventTypes.Change → ((e: Event) ⇒ fs2.Stream(TaskEditNameEvent(e.target.asInstanceOf[HTMLInputElement].value)))
     val completedController = DOMEventTypes.Change → ((e: Event) ⇒ fs2.Stream(TaskSetCompletedEvent(e.target.asInstanceOf[HTMLInputElement].checked)))
     val saveController = DOMEventTypes.Click → ((e: Event) ⇒ fs2.Stream(TaskSaveEvent))
