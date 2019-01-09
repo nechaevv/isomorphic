@@ -1,17 +1,15 @@
 package com.github.nechaevv.isomorphic
 
 import cats.effect._
-import com.github.nechaevv.isomorphic.api.ReactDOM
 import fs2._
 import fs2.concurrent.Queue
-import org.scalajs.dom.Node
 
-object ReactPipeline {
-  def run[AppState <: AnyRef](container: Node, appComponent: Component[AppState],
+object EventReducerPipeline {
+  def run[AppState <: AnyRef](render: (Element, EventDispatcher) ⇒ Unit,
+                              appComponent: Component[AppState],
                               stateReducer: Any ⇒ AppState ⇒ AppState, effects: Any ⇒ AppState ⇒ EventStream, initialState: AppState)
                              (implicit concurrent: Concurrent[IO]): IO[Queue[IO, Any]] = for {
     eventStream ← Queue.unbounded[IO, Any]
-    renderer = new ReactRenderer(eventStream)
     events = eventStream.dequeue.takeWhile(event ⇒ event != AppStopEvent, takeFailure = true)
     _ ← (for {
       reducerOutput ← events.scan[(AppState, Any, Boolean)]((initialState, AppStartEvent, true))((acc, event: Any) ⇒ {
@@ -24,8 +22,7 @@ object ReactPipeline {
       })
       (state, event, hasChanged) = reducerOutput
       renderStream = if (hasChanged) Stream.eval(IO {
-        val reactComponent = appComponent(state)(renderer)
-        ReactDOM.render(reactComponent, container)
+        render(appComponent(state), eventStream)
       }) else Stream.empty
       effectStream = Stream.eval(concurrent.start(
         effects(event)(state).through(eventStream.enqueue).compile.drain

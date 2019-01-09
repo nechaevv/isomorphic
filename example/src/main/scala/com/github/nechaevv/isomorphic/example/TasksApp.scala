@@ -1,12 +1,10 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.{AutonomousCustomElement, StatefulHostComponent}
+import com.github.nechaevv.isomorphic.{AutonomousCustomElement, ReactRender, StatefulHostComponent}
 
-object TasksApp extends StatefulHostComponent with AutonomousCustomElement {
+object TasksApp extends StatefulHostComponent with AutonomousCustomElement with ReactRender {
 
   override type State = TasksState
-
-  override def useShadowRoot: Boolean = false
 
   override def elementName: String = "app-tasks"
 
