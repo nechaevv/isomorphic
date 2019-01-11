@@ -3,7 +3,7 @@ package com.github.nechaevv.isomorphic
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.global
 
-object WeakCache extends FunctionCache {
+class WeakCache extends FunctionCache {
   private val weakMap = js.Dynamic.newInstance(global.WeakMap)()
 
   override def memoize[A, B](func: A ⇒ B): A ⇒ B = { a: A ⇒

@@ -12,6 +12,7 @@ trait StatefulHostComponent {
 
   def attributes: Iterable[String] = Seq.empty
   def rootComponent: Component[State]
+  def renderContainer(hostElement: HTMLElement): Node = hostElement
   def initialState(properties: Iterable[(String, String)]): State
   def reducer: Any ⇒ State ⇒ State
   def effect: Any ⇒ State ⇒ EventStream
@@ -53,13 +54,12 @@ abstract class StatefulHostCustomElement[T <: StatefulHostComponent](val webComp
 
 }
 
-trait ShadowRoot { this: ReactRender ⇒
+trait ShadowRoot { this: StatefulHostComponent ⇒
   override def renderContainer(hostElement: HTMLElement): Node = hostElement.asInstanceOf[HTMLElementWithShadowRoot]
     .attachShadow(js.Dynamic.literal("mode" → "open"))
 }
 
 trait ReactRender { this: StatefulHostComponent ⇒
-  def renderContainer(hostElement: HTMLElement): Node = hostElement
   override def render(componentHost: HTMLElement): (Element, EventDispatcher) ⇒ Unit = {
     val container = renderContainer(componentHost)
     (element: Element, eventDispatcher: EventDispatcher) ⇒ {
