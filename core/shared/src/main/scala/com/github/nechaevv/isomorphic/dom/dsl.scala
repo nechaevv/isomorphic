@@ -2,21 +2,29 @@ package com.github.nechaevv.isomorphic.dom
 
 import scala.language.implicitConversions
 
-sealed trait Node
-
-case class Tag(name: String, properties: Seq[NodeProperty] = Nil, children: Seq[Node] = Nil) extends Node {
-  def apply(newProperties: NodeProperty*): Tag = this.copy(properties = newProperties)
-  def apply(newChildren: Node*): Tag = this.copy(children = newChildren)
+sealed trait Node {
+  def key: Option[String]
 }
-case class Text(text: String) extends Node
-case class ComponentNode[S](component: Component[S], state: S) extends Node
-case class Fragment(children: Node*) extends Node
+
+case class TagNode(name: String, properties: Seq[NodeProperty] = Nil, children: Seq[Node] = Nil, key: Option[String] = None) extends Node {
+  def withKey(k: String): TagNode = this.copy(key = Some(k))
+  def apply(newProperties: NodeProperty*): TagNode = this.copy(properties = newProperties)
+  def apply(newChildren: Node*): TagNode = this.copy(children = newChildren)
+}
+case class TextNode(text: String) extends Node {
+  override def key: Option[String] = None
+}
+case class ComponentNode[S](component: Component[S], state: S, key: Option[String] = None) extends Node {
+  def withKey(k: String): ComponentNode[S] = this.copy(key = Some(k))
+}
+case class FragmentNode(children: Seq[Node], key: Option[String] = None) extends Node {
+  def withKey(k: String): FragmentNode = this.copy(key = Some(k))
+}
 
 trait NodeProperty
 
 case class NodeAttribute(name: String, value: String) extends NodeProperty
 case class NodeClass(name: String) extends NodeProperty
-case class NodeId(id: AnyRef) extends NodeProperty
 
 object dsl {
   implicit class PimpedString(s: String) {
@@ -26,5 +34,6 @@ object dsl {
   implicit class PimpedComponent[S](c: Component[S]) {
     def << (state: S): ComponentNode[S] = ComponentNode(c, state)
   }
-  implicit def textToNode(text: String): Node = Text(text)
+  implicit def textToNode(text: String): Node = TextNode(text)
+  def fragment(children: Seq[Node]): FragmentNode = FragmentNode(children)
 }
