@@ -3,7 +3,7 @@ package com.github.nechaevv.isomorphic.dom
 import com.github.nechaevv.isomorphic.EventDispatcher
 import com.github.nechaevv.isomorphic.api.WeakMap
 import org.scalajs.dom.document
-import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom.raw
 
 import scala.scalajs.js
 
@@ -27,13 +27,13 @@ object DomReconciler {
     context.copy(currentVDom = vdom)
   }
 
-  private def reconcileNodeSeq(currentVDom: Seq[Node], vdom: Seq[Node], container: HTMLElement,
+  private def reconcileNodeSeq(currentVDom: Seq[Node], vdom: Seq[Node], container: raw.HTMLElement,
                                eventDispatcher: EventDispatcher): Unit = {
-    var currentVdomRepr = currentVDom.map(nodeReprCache.get(_).toOption).zipWithIndex
-    var recycledElements = List.empty[org.w3c.dom.Node]
+    val currentVdomRepr = currentVDom.map(nodeReprCache.get(_).toOption).zipWithIndex
+    var recycledElements = List.empty[raw.Node]
     var auxId = 0
-    for ((node, nodeIndex) ← vdom.zipWithIndex) {
-      var nodeRepr = nodeReprCache
+    val vdomRepr = for ((node, nodeIndex) ← vdom.zipWithIndex) yield {
+
       var key = node.key.getOrElse({ auxId += 1; "$" + auxId.toString})
       var matchingNodeOpt = currentVdomRepr.find(el ⇒ el._1.exists(_.key == key)).map({
         case (Some(el), elIndex) ⇒ el → elIndex
@@ -42,25 +42,37 @@ object DomReconciler {
 
       node match {
         case TagNode(name, props, children, _) ⇒
+          val (node, nodeRepr) = (for {
+            (tagNodeRepr: TagRepr, tagNodeIndex) ← matchingNodeOpt
+            domNode ← elementMapping.get(tagNodeRepr).toOption
+              if domNode.isInstanceOf[raw.Element] && domNode.asInstanceOf[raw.Element].tagName == name
+          } yield {
+
+          })
 
         case FragmentNode(children, _) ⇒
 
-        case TextNode(text) ⇒
+        case cn: ComponentNode[_] ⇒
+
+        case tn @ TextNode(text) ⇒
           val (node, nodeRepr) = (for {
             (textNodeRepr: TextRepr, textNodeIndex) ← matchingNodeOpt
-            domNode ← elementMapping.get(textNodeRepr).toOption if domNode.isInstanceOf[org.w3c.dom.Text]
+            domNode ← elementMapping.get(textNodeRepr).toOption if domNode.isInstanceOf[raw.Text]
           } yield {
             if (textNodeRepr.text != text) {
-              domNode.asInstanceOf[org.w3c.dom.Text].replaceWholeText(text)
+              domNode.asInstanceOf[raw.Text].data = text
               val repr = TextRepr(text, key)
               elementMapping.set(repr, domNode)
               (domNode, repr)
             } else (domNode, textNodeRepr)
           }).getOrElse((document.createTextNode(text), TextRepr(text, key)))
           elementMapping.set(nodeRepr, node)
+          nodeReprCache.set(tn, nodeRepr)
           if (replaceNode) {
             container.appendChild(node)
           }
+          recycledElements = node :: recycledElements
+          nodeRepr
       }
     }
   }
@@ -85,4 +97,4 @@ object DomReconciler {
 
 }
 
-case class DomReconciliationContext(container: HTMLElement, eventDispatcher: EventDispatcher, currentVDom: Seq[Node])
+case class DomReconciliationContext(container: raw.HTMLElement, eventDispatcher: EventDispatcher, currentVDom: Seq[Node])
