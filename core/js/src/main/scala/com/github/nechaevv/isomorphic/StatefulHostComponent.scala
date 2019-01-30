@@ -1,7 +1,8 @@
 package com.github.nechaevv.isomorphic
 
 import cats.effect.{ContextShift, IO}
-import com.github.nechaevv.isomorphic.api.{HTMLElementWithShadowRoot, ReactDOM}
+import com.github.nechaevv.isomorphic.api.{HTMLElementWithShadowRoot, ReactDOM, WeakMap}
+import com.github.nechaevv.isomorphic.dom.{DomReconciler, DomReconciliationContext}
 import org.scalajs.dom.raw.{HTMLElement, Node}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,7 +17,7 @@ trait StatefulHostComponent {
   def initialState(properties: Iterable[(String, String)]): State
   def reducer: Any ⇒ State ⇒ State
   def effect: Any ⇒ State ⇒ EventStream
-  def render(componentHost: HTMLElement): (Element, EventDispatcher) ⇒ Unit
+  def render(componentHost: HTMLElement): EventDispatcher ⇒ Element ⇒ Unit
 
   def connectedEffect: Option[Any] = None
   def adoptedEffect: Option[Any] = None
@@ -60,11 +61,25 @@ trait ShadowRoot { this: StatefulHostComponent ⇒
 }
 
 trait ReactRender { this: StatefulHostComponent ⇒
-  override def render(componentHost: HTMLElement): (Element, EventDispatcher) ⇒ Unit = {
+  override def render(componentHost: HTMLElement): EventDispatcher ⇒ Element ⇒ Unit = {
     val container = renderContainer(componentHost)
-    (element: Element, eventDispatcher: EventDispatcher) ⇒ {
+    eventDispatcher: EventDispatcher ⇒ element: Element ⇒ {
       val vdom = element(new ReactRenderer(eventDispatcher))
       ReactDOM.render(vdom, container)
     }
   }
 }
+
+/*
+
+trait DomReconcilerRender { this: StatefulHostComponent ⇒
+  override def render(componentHost: HTMLElement): EventDispatcher ⇒ Element ⇒ Unit = eventDispatcher ⇒ {
+    var reconciliationContext = DomReconciliationContext(componentHost, eventDispatcher, Seq.empty)
+    vdom ⇒ {
+      reconciliationContext = DomReconciler(vdom, reconciliationContext)
+    }
+  }
+
+}
+
+*/

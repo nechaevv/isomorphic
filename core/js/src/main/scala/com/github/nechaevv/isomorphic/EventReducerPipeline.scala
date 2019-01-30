@@ -5,11 +5,12 @@ import fs2._
 import fs2.concurrent.Queue
 
 object EventReducerPipeline {
-  def run[AppState <: AnyRef](render: (Element, EventDispatcher) ⇒ Unit,
+  def run[AppState <: AnyRef](render: EventDispatcher ⇒ Element ⇒ Unit,
                               appComponent: Component[AppState],
                               stateReducer: Any ⇒ AppState ⇒ AppState, effects: Any ⇒ AppState ⇒ EventStream, initialState: AppState)
                              (implicit concurrent: Concurrent[IO]): IO[Queue[IO, Any]] = for {
     eventStream ← Queue.unbounded[IO, Any]
+    renderFn = render(eventStream)
     events = eventStream.dequeue.takeWhile(event ⇒ event != AppStopEvent, takeFailure = true)
     _ ← (for {
       reducerOutput ← events.scan[(AppState, Any, Boolean)]((initialState, AppStartEvent, true))((acc, event: Any) ⇒ {
@@ -22,7 +23,7 @@ object EventReducerPipeline {
       })
       (state, event, hasChanged) = reducerOutput
       renderStream = if (hasChanged) Stream.eval(IO {
-        render(appComponent(state), eventStream)
+        renderFn(appComponent(state))
       }) else Stream.empty
       effectStream = Stream.eval(concurrent.start(
         effects(event)(state).through(eventStream.enqueue).compile.drain

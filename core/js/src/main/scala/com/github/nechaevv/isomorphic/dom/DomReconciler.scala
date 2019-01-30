@@ -28,7 +28,7 @@ object DomReconciler {
     context.copy(currentVDom = vdom)
   }
 
-  def evalComponent(cn: ComponentNode[_]): Node = {
+  def evalComponent[S](cn: ComponentNode[S]): Node = {
     val cached = componentCache.get(cn)
     if (cached.isDefined) cached.get
     else {
@@ -78,22 +78,25 @@ object DomReconciler {
       }
 
       val (node, vnodeRepr) = unwrapComponent(vnode) match {
+        case _: ComponentNode[_] ⇒ throw new RuntimeException("Component node not expected")
         case TagNode(name, props, children, _) ⇒
           (for {
             (tagNode: TagNode, tagNodeRepr: TagRepr, tagNodeIndex) ← matchingNodeOpt
             domNode ← elementMapping.get(tagNodeRepr).toOption
               if domNode.isInstanceOf[raw.Element] && domNode.asInstanceOf[raw.Element].tagName.equalsIgnoreCase(name)
           } yield {
-            if (tagNode eq vnode) (tagNode, tagNodeRepr)
-            val elem = domNode.asInstanceOf[raw.Element]
-            val (attrs, listeners) = tagProps(props)
-            for ((k, v) ← attrs) if (!tagNodeRepr.attrs.get(k).contains(v)) elem.setAttribute(k, v)
-            for (k ← tagNodeRepr.attrs.keys) if (!attrs.contains(k)) elem.removeAttribute(k)
-            for (lsn ← listeners) if (!tagNodeRepr.eventListeners.contains(lsn)) addEventListener(lsn, elem)
-            for (lsn ← tagNodeRepr.eventListeners) if (!listeners.contains(lsn)) {
-              elem.removeEventListener(lsn.eventType.name.toLowerCase, listenerMapping.get(lsn).get, lsn.eventType.isCapturing)
+            if (tagNode eq vnode) (domNode, tagNodeRepr)
+            else {
+              val elem = domNode.asInstanceOf[raw.Element]
+              val (attrs, listeners) = tagProps(props)
+              for ((k, v) ← attrs) if (!tagNodeRepr.attrs.get(k).contains(v)) elem.setAttribute(k, v)
+              for (k ← tagNodeRepr.attrs.keys) if (!attrs.contains(k)) elem.removeAttribute(k)
+              for (lsn ← listeners) if (!tagNodeRepr.eventListeners.contains(lsn)) addEventListener(lsn, elem)
+              for (lsn ← tagNodeRepr.eventListeners) if (!listeners.contains(lsn)) {
+                elem.removeEventListener(lsn.eventType.name.toLowerCase, listenerMapping.get(lsn).get, lsn.eventType.isCapturing)
+              }
+              (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(tagNode.children, children, elem, eventDispatcher), key))
             }
-            (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(tagNode.children, children, elem, eventDispatcher), key))
           }).getOrElse({
             val elem = document.createElement(name)
             val (attrs, listeners) = tagProps(props)

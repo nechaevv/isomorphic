@@ -8,8 +8,8 @@ sealed trait Node {
 
 case class TagNode(name: String, properties: Seq[NodeProperty] = Nil, children: Seq[Node] = Nil, key: Option[String] = None) extends Node {
   def withKey(k: String): TagNode = this.copy(key = Some(k))
-  def apply(newProperties: NodeProperty*): TagNode = this.copy(properties = newProperties)
-  def apply(newChildren: Node*): TagNode = this.copy(children = newChildren)
+  def props(newProperties: NodeProperty*): TagNode = this.copy(properties = newProperties)
+  def children(newChildren: Node*): TagNode = this.copy(children = newChildren)
 }
 case class TextNode(text: String) extends Node {
   override def key: Option[String] = None
