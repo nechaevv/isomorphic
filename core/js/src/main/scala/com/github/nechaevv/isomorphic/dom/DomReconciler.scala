@@ -11,7 +11,8 @@ object DomReconciler {
 
   private val componentCache = new WeakMap[ComponentNode[_], Node]
   private val nodeReprCache = new WeakMap[Node, NodeRepr]
-  private val elementMapping = new WeakMap[NodeRepr, org.scalajs.dom.Node]
+  private val elementMapping = new WeakMap[NodeRepr, raw.Node]
+  private val listenerMapping = new WeakMap[NodeEventListener, js.Function1[raw.Event, Unit]]
 
   trait NodeRepr {
     def key: String
@@ -27,36 +28,96 @@ object DomReconciler {
     context.copy(currentVDom = vdom)
   }
 
-  private def reconcileNodeSeq(currentVDom: Seq[Node], vdom: Seq[Node], container: raw.HTMLElement,
-                               eventDispatcher: EventDispatcher): Unit = {
-    val currentVdomRepr = currentVDom.map(nodeReprCache.get(_).toOption).zipWithIndex
-    var recycledElements = List.empty[raw.Node]
+  def evalComponent(cn: ComponentNode[_]): Node = {
+    val cached = componentCache.get(cn)
+    if (cached.isDefined) cached.get
+    else {
+      val result = cn.component(cn.state)
+      componentCache.set(cn, result)
+      result
+    }
+  }
+
+  private def reconcileNodeSeq(currentVDom: Seq[Node], vdom: Seq[Node], container: raw.Element,
+                               eventDispatcher: EventDispatcher): Seq[NodeRepr] = {
+    val currentVdomRepr = currentVDom.map(vnode ⇒ (vnode, nodeReprCache.get(vnode))).zipWithIndex.collect({
+      case ((vnode, vnodeReprOpt), index) if vnodeReprOpt.isDefined  ⇒
+        val nodeRepr = vnodeReprOpt.get
+        nodeRepr.key → (vnode, nodeRepr, index)
+    }).toMap
     var auxId = 0
-    val vdomRepr = for ((node, nodeIndex) ← vdom.zipWithIndex) yield {
+    val vdomRepr = for ((vnode, nodeIndex) ← vdom.zipWithIndex) yield {
 
-      var key = node.key.getOrElse({ auxId += 1; "$" + auxId.toString})
-      var matchingNodeOpt = currentVdomRepr.find(el ⇒ el._1.exists(_.key == key)).map({
-        case (Some(el), elIndex) ⇒ el → elIndex
-      })
-      var replaceNode = matchingNodeOpt.isEmpty || matchingNodeOpt.exists(_._2 != nodeIndex)
+      val key = vnode.key.getOrElse({ auxId += 1; "$" + auxId.toString})
+      val matchingNodeOpt = currentVdomRepr.get(key)
 
-      node match {
+      def unwrapComponent(n: Node): Node = n match {
+        case cn: ComponentNode[_] ⇒ unwrapComponent(evalComponent(cn))
+        case _ ⇒ n
+      }
+
+      def tagProps(props: Seq[NodeProperty]): (Map[String, String], Set[NodeEventListener]) = {
+        (
+          props.collect({
+            case NodeAttribute(attrName, value) ⇒ attrName → value
+          }).toMap,
+          props.collect({
+            case e: NodeEventListener ⇒ e
+          }).toSet
+        )
+      }
+
+      def addEventListener(listener: NodeEventListener, elem: raw.Element): Unit = {
+        val eventListenerFn = (e: raw.Event) ⇒ listener.handler(e).through(eventDispatcher.enqueue).compile.drain.unsafeRunAsyncAndForget()
+        listenerMapping.set(listener, eventListenerFn)
+        elem.addEventListener(
+          listener.eventType.name.toLowerCase,
+          eventListenerFn,
+          listener.eventType.isCapturing
+        )
+      }
+
+      val (node, vnodeRepr) = unwrapComponent(vnode) match {
         case TagNode(name, props, children, _) ⇒
-          val (node, nodeRepr) = (for {
-            (tagNodeRepr: TagRepr, tagNodeIndex) ← matchingNodeOpt
+          (for {
+            (tagNode: TagNode, tagNodeRepr: TagRepr, tagNodeIndex) ← matchingNodeOpt
             domNode ← elementMapping.get(tagNodeRepr).toOption
-              if domNode.isInstanceOf[raw.Element] && domNode.asInstanceOf[raw.Element].tagName == name
+              if domNode.isInstanceOf[raw.Element] && domNode.asInstanceOf[raw.Element].tagName.equalsIgnoreCase(name)
           } yield {
-
+            if (tagNode eq vnode) (tagNode, tagNodeRepr)
+            val elem = domNode.asInstanceOf[raw.Element]
+            val (attrs, listeners) = tagProps(props)
+            for ((k, v) ← attrs) if (!tagNodeRepr.attrs.get(k).contains(v)) elem.setAttribute(k, v)
+            for (k ← tagNodeRepr.attrs.keys) if (!attrs.contains(k)) elem.removeAttribute(k)
+            for (lsn ← listeners) if (!tagNodeRepr.eventListeners.contains(lsn)) addEventListener(lsn, elem)
+            for (lsn ← tagNodeRepr.eventListeners) if (!listeners.contains(lsn)) {
+              elem.removeEventListener(lsn.eventType.name.toLowerCase, listenerMapping.get(lsn).get, lsn.eventType.isCapturing)
+            }
+            (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(tagNode.children, children, elem, eventDispatcher), key))
+          }).getOrElse({
+            val elem = document.createElement(name)
+            val (attrs, listeners) = tagProps(props)
+            for ((k, v) ← attrs) elem.setAttribute(k, v)
+            for (lsn ← listeners) addEventListener(lsn, elem)
+            (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(Nil, children, elem, eventDispatcher), key))
           })
 
-        case FragmentNode(children, _) ⇒
+        case FragmentNode(children, _) ⇒ //TODO: unwrap DIV
+          (for {
+            (fragNode: FragmentNode, fragNodeRepr: FragmentRepr, tagNodeIndex) ← matchingNodeOpt
+            domNode ← elementMapping.get(fragNodeRepr).toOption
+            if domNode.isInstanceOf[raw.Element] && domNode.asInstanceOf[raw.Element].tagName == "DIV"
+          } yield {
+            if (fragNode == vnode) (domNode, fragNodeRepr)
+            else (domNode, FragmentRepr(reconcileNodeSeq(fragNode.children, children, domNode.asInstanceOf[raw.Element], eventDispatcher), key))
+          }).getOrElse({
+            val elem = document.createElement("DIV")
+            (elem, FragmentRepr(reconcileNodeSeq(Nil, children, elem, eventDispatcher), key))
+          })
 
-        case cn: ComponentNode[_] ⇒
-
-        case tn @ TextNode(text) ⇒
-          val (node, nodeRepr) = (for {
-            (textNodeRepr: TextRepr, textNodeIndex) ← matchingNodeOpt
+        case TextNode(text) ⇒
+          (for {
+            (textNode: TextNode, textNodeRepr: TextRepr, textNodeIndex) ← matchingNodeOpt
             domNode ← elementMapping.get(textNodeRepr).toOption if domNode.isInstanceOf[raw.Text]
           } yield {
             if (textNodeRepr.text != text) {
@@ -66,34 +127,23 @@ object DomReconciler {
               (domNode, repr)
             } else (domNode, textNodeRepr)
           }).getOrElse((document.createTextNode(text), TextRepr(text, key)))
-          elementMapping.set(nodeRepr, node)
-          nodeReprCache.set(tn, nodeRepr)
-          if (replaceNode) {
-            container.appendChild(node)
-          }
-          recycledElements = node :: recycledElements
-          nodeRepr
       }
-    }
-  }
 
-  /*
-  private def buildRepr(vdom: Seq[Node]): Seq[NodeRepr] = vdom map {
-    case TagNode(name, props, children, key) ⇒ TagRepr(name,
-      props.collect({
-        case NodeAttribute(attrName, value) ⇒ attrName → value
-      }).toMap,
-      props.collect({
-        case e: NodeEventListener ⇒ e
-      }).toSet,
-      buildRepr(children)
-    )
-    case TextNode(s) ⇒ TextRepr(s)
-    case f: FragmentNode ⇒ FragmentRepr(buildRepr(f.children))
-    case cn: ComponentNode[_] ⇒
-      val cached
+      elementMapping.set(vnodeRepr, node)
+      nodeReprCache.set(vnode, vnodeRepr)
+
+      if (nodeIndex >= container.childElementCount) container.appendChild(node)
+      else {
+        val existingNode = container.childNodes(nodeIndex)
+        if (!(existingNode eq node)) container.insertBefore(node, existingNode)
+      }
+      vnodeRepr
+    }
+    for (i ← vdom.length until container.childElementCount) {
+      container.removeChild(container.childNodes(i))
+    }
+    vdomRepr
   }
-  */
 
 }
 

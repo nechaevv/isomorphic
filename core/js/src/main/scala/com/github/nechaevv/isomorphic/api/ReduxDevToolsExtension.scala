@@ -22,7 +22,8 @@ class ReduxDevToolsConnection extends js.Object {
 
 object ReduxDevToolsExtension {
   private val instance = js.Dynamic.global.window.__REDUX_DEVTOOLS_EXTENSION__
-  def isAvailable: Boolean = js.isUndefined(instance)
-  def apply(): ReduxDevToolsExtension = instance.asInstanceOf[ReduxDevToolsExtension]
+    .asInstanceOf[js.UndefOr[ReduxDevToolsExtension]]
+  def isAvailable: Boolean = instance.isEmpty
+  def apply(): ReduxDevToolsExtension = instance.get
 }
 
