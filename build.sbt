@@ -29,7 +29,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
       "io.circe"      %%% "circe-parser" % circeVersion
     ),
     npmDependencies in Compile ++= Seq("react" → reactVersion, "react-dom" → reactVersion),
-    scalacOptions += "-P:scalajs:sjsDefinedByDefault"
+    scalacOptions ++= Seq("-P:scalajs:sjsDefinedByDefault", "-feature", "-deprecation"),
   )
   .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
 
@@ -45,7 +45,7 @@ lazy val example = project.in(file("example"))
       "com.github.julien-truffaut" %%%  "monocle-macro" % monocleVersion,
       "com.github.julien-truffaut" %%%  "monocle-law"   % monocleVersion % "test"
     ), 
-    scalacOptions ++= Seq("-P:scalajs:sjsDefinedByDefault", "-feature"),
+    scalacOptions ++= Seq("-P:scalajs:sjsDefinedByDefault", "-feature", "-deprecation"),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     scalaJSOutputMode := OutputMode.ECMAScript6,
     scalaJSModuleKind := ModuleKind.CommonJSModule,

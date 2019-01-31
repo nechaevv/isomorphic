@@ -1,8 +1,8 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.{AutonomousCustomElement, ReactRender, StatefulHostComponent}
+import com.github.nechaevv.isomorphic.{AutonomousCustomElement, DomReconcilerRender, ReactRender, StatefulHostComponent}
 
-object TasksApp extends StatefulHostComponent with AutonomousCustomElement with ReactRender {
+object TasksApp extends StatefulHostComponent with AutonomousCustomElement with DomReconcilerRender {
 
   override type State = TasksState
 

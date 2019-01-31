@@ -1,8 +1,8 @@
 package com.github.nechaevv.isomorphic
 
 import cats.effect.{ContextShift, IO}
-import com.github.nechaevv.isomorphic.api.{HTMLElementWithShadowRoot, ReactDOM, WeakMap}
-import com.github.nechaevv.isomorphic.dom.{DomReconciler, DomReconciliationContext}
+import com.github.nechaevv.isomorphic.api.{HTMLElementWithShadowRoot, ReactDOM}
+import com.github.nechaevv.isomorphic.dom.{ComponentNode, DomReconciler}
 import org.scalajs.dom.raw.{HTMLElement, Node}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -10,14 +10,15 @@ import scala.scalajs.js
 
 trait StatefulHostComponent {
   type State <: AnyRef
+  type VDomNode
 
   def attributes: Iterable[String] = Seq.empty
-  def rootComponent: Component[State]
-  def renderContainer(hostElement: HTMLElement): Node = hostElement
+  def rootComponent: State ⇒ VDomNode
+  //def renderContainer(hostElement: HTMLElement): Node = hostElement
   def initialState(properties: Iterable[(String, String)]): State
   def reducer: Any ⇒ State ⇒ State
   def effect: Any ⇒ State ⇒ EventStream
-  def render(componentHost: HTMLElement): EventDispatcher ⇒ Element ⇒ Unit
+  def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit
 
   def connectedEffect: Option[Any] = None
   def adoptedEffect: Option[Any] = None
@@ -33,9 +34,8 @@ abstract class StatefulHostCustomElement[T <: StatefulHostComponent](val webComp
 
 
   def connectedCallback(): Unit = {
-    EventReducerPipeline.run[webComponent.State](
+    EventReducerPipeline.run[webComponent.State, webComponent.VDomNode](
       webComponent.render(this),
-      webComponent.rootComponent,
       webComponent.reducer,
       webComponent.effect,
       webComponent.initialState(webComponent.attributes.map(attribute ⇒ attribute → getAttribute(attribute))),
@@ -54,32 +54,30 @@ abstract class StatefulHostCustomElement[T <: StatefulHostComponent](val webComp
   }
 
 }
-
+/*
 trait ShadowRoot { this: StatefulHostComponent ⇒
   override def renderContainer(hostElement: HTMLElement): Node = hostElement.asInstanceOf[HTMLElementWithShadowRoot]
     .attachShadow(js.Dynamic.literal("mode" → "open"))
 }
-
+*/
 trait ReactRender { this: StatefulHostComponent ⇒
-  override def render(componentHost: HTMLElement): EventDispatcher ⇒ Element ⇒ Unit = {
-    val container = renderContainer(componentHost)
-    eventDispatcher: EventDispatcher ⇒ element: Element ⇒ {
-      val vdom = element(new ReactRenderer(eventDispatcher))
-      ReactDOM.render(vdom, container)
+  override type VDomNode = Element
+  override def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit = {
+    //val container = renderContainer(componentHost)
+    eventDispatcher: EventDispatcher ⇒ state: State ⇒ {
+      val vdom = rootComponent(state)(new ReactRenderer(eventDispatcher))
+      ReactDOM.render(vdom, componentHost)
     }
   }
 }
-
-/*
 
 trait DomReconcilerRender { this: StatefulHostComponent ⇒
-  override def render(componentHost: HTMLElement): EventDispatcher ⇒ Element ⇒ Unit = eventDispatcher ⇒ {
-    var reconciliationContext = DomReconciliationContext(componentHost, eventDispatcher, Seq.empty)
-    vdom ⇒ {
-      reconciliationContext = DomReconciler(vdom, reconciliationContext)
+  override type VDomNode = dom.Node
+  override def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit = {
+    //val container = renderContainer(componentHost)
+    eventDispatcher ⇒ state ⇒ {
+      DomReconciler(componentHost, ComponentNode(rootComponent, state), eventDispatcher)
     }
   }
 
 }
-
-*/

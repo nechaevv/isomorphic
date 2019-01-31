@@ -9,7 +9,7 @@ sealed trait Node {
 case class TagNode(name: String, properties: Seq[NodeProperty] = Nil, children: Seq[Node] = Nil, key: Option[String] = None) extends Node {
   def withKey(k: String): TagNode = this.copy(key = Some(k))
   def props(newProperties: NodeProperty*): TagNode = this.copy(properties = newProperties)
-  def children(newChildren: Node*): TagNode = this.copy(children = newChildren)
+  def apply(newChildren: Node*): TagNode = this.copy(children = newChildren)
 }
 case class TextNode(text: String) extends Node {
   override def key: Option[String] = None
@@ -35,5 +35,5 @@ object dsl {
     def << (state: S): ComponentNode[S] = ComponentNode(c, state)
   }
   implicit def textToNode(text: String): Node = TextNode(text)
-  def fragment(children: Seq[Node]): FragmentNode = FragmentNode(children)
+  def fragment(children: Node*): FragmentNode = FragmentNode(children)
 }
