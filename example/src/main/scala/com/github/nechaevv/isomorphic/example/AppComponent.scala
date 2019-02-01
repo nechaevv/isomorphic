@@ -4,9 +4,9 @@ import com.github.nechaevv.isomorphic.dom._
 import dsl._
 import tags._
 
-object AppComponent extends Component[TasksState] {
+object AppComponent extends Component[TasksState, TagNode] {
   val appTasks = TagNode("app-tasks")
-  override def apply(state: TasksState): Node = {
+  override def apply(state: TasksState): TagNode = {
     appTasks(
       h1("ToDo sample app"),
       TaskListComponent() << state.tasks,

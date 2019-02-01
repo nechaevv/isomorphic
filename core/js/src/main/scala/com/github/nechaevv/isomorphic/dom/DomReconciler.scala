@@ -9,11 +9,11 @@ import scala.scalajs.js
 
 object DomReconciler {
 
-  private val componentCache = new WeakMap[ComponentNode[_], Node]
+  private val componentCache = new WeakMap[ComponentNode[Any, Node], Node]
   private val nodeReprCache = new WeakMap[Node, NodeRepr]
   private val elementMapping = new WeakMap[NodeRepr, raw.Node]
   private val listenerMapping = new WeakMap[NodeEventListener, js.Function1[raw.Event, Unit]]
-  private val rootVDom = new WeakMap[raw.HTMLElement, Node]
+  private val rootVDom = new WeakMap[raw.Node, Node]
 
   trait NodeRepr {
     def key: String
@@ -24,7 +24,7 @@ object DomReconciler {
   case class FragmentRepr(children: Seq[NodeRepr], key: String) extends NodeRepr
   case class TextRepr(text:String, key: String) extends NodeRepr
 
-  def apply(rootElement: raw.HTMLElement, vdom: Node, eventDispatcher: EventDispatcher): Unit = {
+  def reconcileRootTagComponent[S](rootElement: raw.HTMLElement, vdom: ComponentNode[S, TagNode], eventDispatcher: EventDispatcher): Unit = {
     val matchingNode = (for {
       vdom ← rootVDom.get(rootElement).toOption
       vdomRepr ← nodeReprCache.get(vdom).toOption
@@ -33,32 +33,41 @@ object DomReconciler {
         val attr = rootElement.attributes(i)
         attr.name → attr.value
       }).toMap
-      (
-        TagNode(rootElement.tagName),
-        TagRepr(rootElement.tagName, attributes, Set.empty, Seq.empty, ""),
-        0
-      )
+      val vnode = TagNode(rootElement.tagName)
+      val repr = TagRepr(rootElement.tagName, attributes, Set.empty, Seq.empty, "")
+      elementMapping.set(repr, rootElement)
+      (vnode, repr, 0)
     })
 
     reconcileNode(vdom, 0, rootElement.parentElement, "", Some(matchingNode), eventDispatcher)
     rootVDom.set(rootElement, vdom)
   }
 
-  def evalComponent[S](cn: ComponentNode[S]): Node = {
-    val cached = componentCache.get(cn)
-    if (cached.isDefined) cached.get
-    else {
-      val result = cn.component(cn.state)
-      componentCache.set(cn, result)
-      result
-    }
+  def reconcileRootFragmentComponent[S](rootElement: raw.Node with raw.ParentNode, vdom: ComponentNode[S, FragmentNode], eventDispatcher: EventDispatcher): Unit = {
+    val vdomCurr = rootVDom.get(rootElement).toOption.asInstanceOf[Option[ComponentNode[S, FragmentNode]]]
+    val childrenCurr = vdomCurr.map(vc ⇒ evalComponent(vc, vdomCurr).children).getOrElse(Nil)
+    val fragment = evalComponent(vdom, vdomCurr)
+    val vdomRepr = reconcileNodeSeq(childrenCurr, fragment.children, rootElement, eventDispatcher)
+    rootVDom.set(rootElement, vdom)
+    nodeReprCache.set(fragment, FragmentRepr(vdomRepr, ""))
   }
 
-  private def reconcileNode(vnode: Node, nodeIndex: Int, container: raw.Element, key: String,
+  def evalComponent[S, N <: Node](cn: ComponentNode[S, N], prevOpt: Option[ComponentNode[S, N]]): N = {
+    (for {
+      prev ← prevOpt if prev.component == cn.component && prev.state == cn.state
+      cached ← componentCache.get(prev.asInstanceOf[ComponentNode[Any, Node]]).toOption
+    } yield cached.asInstanceOf[N]).getOrElse({
+      val result = cn.component(cn.state)
+      componentCache.set(cn.asInstanceOf[ComponentNode[Any, Node]], result)
+      result
+    })
+  }
+
+  private def reconcileNode(vnode: Node, nodeIndex: Int,  container: raw.Node with raw.ParentNode, key: String,
                     matchingNodeOpt: Option[(Node, NodeRepr, Int)], eventDispatcher: EventDispatcher): NodeRepr = {
 
-    def unwrapComponent(n: Node): Node = n match {
-      case cn: ComponentNode[_] ⇒ unwrapComponent(evalComponent(cn))
+    def unwrapComponent[S, N <: Node](n: Node, prev: Option[ComponentNode[S, N]]): Node = n match {
+      case cn: ComponentNode[S, N] ⇒ unwrapComponent(evalComponent(cn, prev), prev)
       case _ ⇒ n
     }
 
@@ -83,8 +92,12 @@ object DomReconciler {
       )
     }
 
-    val (node, vnodeRepr) = unwrapComponent(vnode) match {
-      case _: ComponentNode[_] ⇒ throw new RuntimeException("Component node not expected")
+    val matchingComponentNodeOpt = matchingNodeOpt collect {
+      case (cn: ComponentNode[Any, Node], _, _) ⇒ cn
+    }
+
+    val (node, vnodeRepr) = unwrapComponent[Any, Node](vnode, matchingComponentNodeOpt) match {
+      case _: ComponentNode[_, _] ⇒ throw new RuntimeException("Component node not expected")
       case TagNode(name, props, children, _) ⇒
         (for {
           (tagNode: TagNode, tagNodeRepr: TagRepr, tagNodeIndex) ← matchingNodeOpt
@@ -149,7 +162,7 @@ object DomReconciler {
     vnodeRepr
   }
 
-  private def reconcileNodeSeq(currentVDom: Seq[Node], vdom: Seq[Node], container: raw.Element,
+  private def reconcileNodeSeq(currentVDom: Seq[Node], vdom: Seq[Node], container: raw.Node with raw.ParentNode,
                                eventDispatcher: EventDispatcher): Seq[NodeRepr] = {
     val currentVdomRepr = currentVDom.map(vnode ⇒ (vnode, nodeReprCache.get(vnode))).zipWithIndex.collect({
       case ((vnode, vnodeReprOpt), index) if vnodeReprOpt.isDefined  ⇒

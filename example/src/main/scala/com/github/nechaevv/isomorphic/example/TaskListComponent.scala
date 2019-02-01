@@ -7,7 +7,7 @@ import tags._
 import org.scalajs.dom.Event
 
 object TaskListComponent {
- def apply(): Component[Seq[Task]] = { tasks ⇒
+ def apply(): Component[Seq[Task], TagNode] = { tasks ⇒
    ul(
      (for ((task, index) ← tasks.zipWithIndex) yield {
        val taskListController = DOMEventTypes.Click → ((e: Event) ⇒ fs2.Stream(TaskSelectEvent(index)))

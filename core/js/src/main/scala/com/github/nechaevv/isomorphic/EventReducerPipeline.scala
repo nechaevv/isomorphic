@@ -5,7 +5,7 @@ import fs2._
 import fs2.concurrent.Queue
 
 object EventReducerPipeline {
-  def run[AppState <: AnyRef, VDomNode](render: EventDispatcher ⇒ AppState ⇒ Unit,
+  def run[AppState <: AnyRef](render: EventDispatcher ⇒ AppState ⇒ Unit,
                               stateReducer: Any ⇒ AppState ⇒ AppState, effects: Any ⇒ AppState ⇒ EventStream, initialState: AppState)
                              (implicit concurrent: Concurrent[IO]): IO[Queue[IO, Any]] = for {
     eventStream ← Queue.unbounded[IO, Any]
@@ -22,6 +22,7 @@ object EventReducerPipeline {
       })
       (state, event, hasChanged) = reducerOutput
       renderStream = if (hasChanged) Stream.eval(IO {
+        println(s"Tick, event: $event")
         renderFn(state)
       }) else Stream.empty
       effectStream = Stream.eval(concurrent.start(
