@@ -15,7 +15,11 @@ object TaskListComponent {
        li.withKey(index.toString).props(
          'class := (if(task.completed) "completed" else "uncompleted"),
          taskListController
-       )(task.name)
+       )(
+         span.props('class := "number")(index.toString),
+         " - ",
+         span.props('class := "name")(task.name)
+       )
      }):_*
    )
  }

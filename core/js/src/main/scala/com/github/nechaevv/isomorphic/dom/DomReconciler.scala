@@ -27,22 +27,23 @@ object DomReconciler {
   def reconcileRootComponent[S](rootElement: raw.Node with raw.ParentNode, vdomComp: ComponentNode[S, FragmentNode], eventDispatcher: EventDispatcher): Unit = {
     val vdomComponentCurr = rootVDom.get(rootElement).toOption.asInstanceOf[Option[ComponentNode[S, FragmentNode]]]
     val (vdom, vdomCurr) = evalComponent(vdomComp, vdomComponentCurr)
-    val vdomRepr = reconcileNodeSeq(vdomCurr.map(_.children).getOrElse(Nil), vdom.children, rootElement, eventDispatcher)
-    rootVDom.set(rootElement, vdomComp.asInstanceOf[ComponentNode[Any, FragmentNode]])
-    nodeReprCache.set(vdom, FragmentRepr(vdomRepr, ""))
+    if (!vdomCurr.exists(_ eq vdom)) {
+      reconcileNodeSeq(vdomCurr.map(_.children).getOrElse(Nil), vdom.children, rootElement, eventDispatcher)
+      rootVDom.set(rootElement, vdomComp.asInstanceOf[ComponentNode[Any, FragmentNode]])
+    }
   }
 
-  def evalComponent[S, N <: Node](cn: ComponentNode[S, N], prevOpt: Option[ComponentNode[S, N]]): (N, Option[N]) = {
+  def evalComponent[S, N <: Node](vnode: ComponentNode[S, N], vnodeCurrOpt: Option[ComponentNode[S, N]]): (N, Option[N]) = {
     (for {
-      prev ← prevOpt if prev.component == cn.component
-      cached ← componentCache.get(prev.asInstanceOf[ComponentNode[Any, Node]]).toOption
-    } yield (cached.asInstanceOf[N], prev.state)) match {
-      case Some((cached, prevState)) if prevState == cn.state ⇒
-        componentCache.set(cn.asInstanceOf[ComponentNode[Any, Node]], cached)
+      vnodeCurr ← vnodeCurrOpt
+      cached ← componentCache.get(vnodeCurr.asInstanceOf[ComponentNode[Any, Node]]).toOption
+    } yield (cached.asInstanceOf[N], vnodeCurr.state)) match {
+      case Some((cached, prevState)) if prevState == vnode.state ⇒
+        componentCache.set(vnode.asInstanceOf[ComponentNode[Any, Node]], cached)
         (cached, Some(cached))
       case other ⇒
-        val result = cn.component(cn.state)
-        componentCache.set(cn.asInstanceOf[ComponentNode[Any, Node]], result)
+        val result = vnode.component(vnode.state)
+        componentCache.set(vnode.asInstanceOf[ComponentNode[Any, Node]], result)
         (result, other.map(_._1))
     }
   }
@@ -87,8 +88,8 @@ object DomReconciler {
           (tagNodeCurr: TagNode, tagReprCurr: TagRepr, tagIndexCurr) ← matchingNodeOpt if tagReprCurr.name == name
           domNodeCurr ← elementMapping.get(tagReprCurr).toOption
         } yield {
-          //if (tagNodeCurr eq tn) (domNodeCurr, tagReprCurr)
-          //else {
+          if (tagNodeCurr eq tn) (domNodeCurr, tagReprCurr)
+          else {
             val elem = domNodeCurr.asInstanceOf[raw.Element]
             val (attrs, listeners) = tagProps(props)
             for ((k, v) ← attrs) if (!tagReprCurr.attrs.get(k).contains(v)) elem.setAttribute(k, v)
@@ -98,7 +99,7 @@ object DomReconciler {
               elem.removeEventListener(lsn.eventType.name.toLowerCase, listenerMapping.get(lsn).get, lsn.eventType.isCapturing)
             }
             (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(tagNodeCurr.children, children, elem, eventDispatcher), key))
-          //}
+          }
         }).getOrElse({
           println(s"+$name")
           val elem = document.createElement(name)
@@ -139,8 +140,8 @@ object DomReconciler {
         })
     }
 
-    elementMapping.set(vnodeRepr, node)
     nodeReprCache.set(vnode, vnodeRepr)
+    elementMapping.set(vnodeRepr, node)
 
     if (nodeIndex >= container.childElementCount) container.appendChild(node)
     else {
@@ -166,9 +167,10 @@ object DomReconciler {
         (_, vnodeCurrIndex) ← vnodeCurrOpt
         vnodeCurrUnwrapped ← vnodeCurrUnwrappedOpt
         reprCurr ← nodeReprCache.get(vnodeCurrUnwrapped).toOption
-      } yield (vnodeUnwrapped, reprCurr, vnodeCurrIndex)
+      } yield (vnodeCurrUnwrapped, reprCurr, vnodeCurrIndex)
       reconcileNode(vnodeUnwrapped, nodeIndex, container, key, matchingNodeOpt, eventDispatcher)
     }
+
     for (i ← vdom.length until container.childElementCount) {
       println("-")
       container.removeChild(container.lastChild)
