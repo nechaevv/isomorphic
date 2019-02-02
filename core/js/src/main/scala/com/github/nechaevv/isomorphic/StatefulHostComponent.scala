@@ -52,12 +52,7 @@ abstract class StatefulHostCustomElement[T <: StatefulHostComponent](val webComp
   }
 
 }
-/*
-trait ShadowRoot { this: StatefulHostComponent ⇒
-  override def renderContainer(hostElement: HTMLElement): Node = hostElement.asInstanceOf[HTMLElementWithShadowRoot]
-    .attachShadow(js.Dynamic.literal("mode" → "open"))
-}
-*/
+
 trait ReactRender { this: StatefulHostComponent ⇒
   def rootComponent: State ⇒ Element
 
