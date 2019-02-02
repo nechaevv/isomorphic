@@ -65,11 +65,11 @@ trait ReactRender { this: StatefulHostComponent ⇒
 }
 
 trait DomReconcilerRender { this: StatefulHostComponent ⇒
-  def rootComponent: dom.Component[State, TagNode]
+  def rootComponent: dom.Component[State, FragmentNode]
 
   override def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit = {
     eventDispatcher ⇒ state ⇒ {
-      DomReconciler.reconcileRootTagComponent(componentHost, ComponentNode(rootComponent, state), eventDispatcher)
+      DomReconciler.reconcileRootComponent(componentHost, ComponentNode(rootComponent, state), eventDispatcher)
     }
   }
 }
@@ -81,7 +81,7 @@ trait ShadowDomReconcilerRender { this: StatefulHostComponent ⇒
     val shadowRoot = componentHost.asInstanceOf[HTMLElementWithShadowRoot]
       .attachShadow(js.Dynamic.literal("mode" → (if (isOpen) "open" else "closed")))
     eventDispatcher ⇒ state ⇒ {
-      DomReconciler.reconcileRootFragmentComponent(shadowRoot, ComponentNode(rootComponent, state), eventDispatcher)
+      DomReconciler.reconcileRootComponent(shadowRoot, ComponentNode(rootComponent, state), eventDispatcher)
     }
   }
 }
