@@ -28,8 +28,6 @@
   "dependencies": {
     "@material/theme": "^0.40.0",
     "@material/typography": "^0.39.0",
-    "document-register-element": "^1.11.1",
-    "react": "^16.5.1",
-    "react-dom": "^16.5.1"
+    "document-register-element": "^1.11.1"
   }
 }
