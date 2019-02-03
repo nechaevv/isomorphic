@@ -28,7 +28,7 @@ object DomReconciler {
     val vdomComponentCurr = rootVDom.get(rootElement).toOption.asInstanceOf[Option[ComponentNode[S, FragmentNode]]]
     val (vdom, vdomCurr) = evalComponent(vdomComp, vdomComponentCurr)
     if (!vdomCurr.exists(_ eq vdom)) {
-      reconcileNodeSeq(vdomCurr.map(_.children).getOrElse(Nil), vdom.children, rootElement, eventDispatcher)
+      reconcileNodeSeq(vdomCurr.map(_.children).getOrElse(Nil), vdom.children, 0, rootElement, eventDispatcher)
       rootVDom.set(rootElement, vdomComp.asInstanceOf[ComponentNode[Any, FragmentNode]])
     }
   }
@@ -78,28 +78,32 @@ object DomReconciler {
     )
   }
 
-  private def reconcileNode(vnode: Node, nodeIndex: Int,  container: raw.Node with raw.ParentNode, key: String,
-                            matchingNodeOpt: Option[(Node, NodeRepr, Int)], eventDispatcher: EventDispatcher): NodeRepr = {
-
-    val (node, vnodeRepr) = vnode match {
+  private def reconcileNode(vnode: Node, nodeIndex: Int, offset: Int, container: raw.Node with raw.ParentNode, key: String,
+                            matchingNodeOpt: Option[(Node, NodeRepr, Int)], eventDispatcher: EventDispatcher): (NodeRepr, Int) = {
+    val containerIndex = offset + nodeIndex
+    val (node, vnodeRepr, nodeCount) = vnode match {
       case _: ComponentNode[_, _] ⇒ throw new RuntimeException("Component node not expected")
       case tn @ TagNode(name, props, children, _) ⇒
         (for {
           (tagNodeCurr: TagNode, tagReprCurr: TagRepr, tagIndexCurr) ← matchingNodeOpt if tagReprCurr.name == name
           domNodeCurr ← elementMapping.get(tagReprCurr).toOption
         } yield {
-          if (tagNodeCurr eq tn) (domNodeCurr, tagReprCurr)
+          if (tagNodeCurr eq tn) (domNodeCurr, tagReprCurr, 1)
           else {
             val elem = domNodeCurr.asInstanceOf[raw.Element]
             val (attrs, listeners) = tagProps(props)
             for ((k, v) ← attrs) if (!tagReprCurr.attrs.get(k).contains(v)) {
+              println(s"+attr($name, $k, $v)")
               elem.setAttribute(k, v)
               if (k == "value") elem match {
                 case input: raw.HTMLInputElement ⇒ if (input.value != v) input.value = v
                 case _ ⇒
               }
             }
-            for (k ← tagReprCurr.attrs.keys) if (!attrs.contains(k)) elem.removeAttribute(k)
+            for (k ← tagReprCurr.attrs.keys) if (!attrs.contains(k)) {
+              println(s"-attr($name, $k)")
+              elem.removeAttribute(k)
+            }
             for (lsn ← listeners) if (!tagReprCurr.eventListeners.contains(lsn)) {
               println(s"+listener($name,${lsn.eventType.name})")
               addEventListener(lsn, elem, eventDispatcher)
@@ -108,7 +112,7 @@ object DomReconciler {
               println(s"-listener($name,${lsn.eventType.name})")
               elem.removeEventListener(lsn.eventType.name.toLowerCase, listenerMapping.get(lsn).get, lsn.eventType.isCapturing)
             }
-            (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(tagNodeCurr.children, children, elem, eventDispatcher), key))
+            (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(tagNodeCurr.children, children, 0, elem, eventDispatcher)._1, key), 1)
           }
         }).getOrElse({
           println(s"+$name")
@@ -116,21 +120,22 @@ object DomReconciler {
           val (attrs, listeners) = tagProps(props)
           for ((k, v) ← attrs) elem.setAttribute(k, v)
           for (lsn ← listeners) addEventListener(lsn, elem, eventDispatcher)
-          (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(Nil, children, elem, eventDispatcher), key))
+          (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(Nil, children, 0, elem, eventDispatcher)._1, key), 1)
         })
 
-      case fn @ FragmentNode(children, _) ⇒ //TODO: unwrap DIV
+      case fn @ FragmentNode(children, _) ⇒
         (for {
           (fragNode: FragmentNode, fragNodeRepr: FragmentRepr, tagNodeIndex) ← matchingNodeOpt
-          domNode ← elementMapping.get(fragNodeRepr).toOption
-          if domNode.isInstanceOf[raw.Element] && domNode.asInstanceOf[raw.Element].tagName == "DIV"
         } yield {
-          if (fragNode == fn) (domNode, fragNodeRepr)
-          else (domNode, FragmentRepr(reconcileNodeSeq(fragNode.children, children, domNode.asInstanceOf[raw.Element], eventDispatcher), key))
+          if (fragNode eq fn) (container, fragNodeRepr, fragNodeRepr.children.length)
+          else {
+            val (repr, nodeCount) = reconcileNodeSeq(fragNode.children, children, containerIndex, container, eventDispatcher)
+            (container, FragmentRepr(repr, key), nodeCount)
+          }
         }).getOrElse({
           println("+$fragment")
-          val elem = document.createElement("DIV")
-          (elem, FragmentRepr(reconcileNodeSeq(Nil, children, elem, eventDispatcher), key))
+          val (repr, nodeCount) = reconcileNodeSeq(Nil, children, containerIndex, container, eventDispatcher)
+          (container, FragmentRepr(repr, key), nodeCount)
         })
 
       case TextNode(text) ⇒
@@ -139,37 +144,41 @@ object DomReconciler {
           domNode ← elementMapping.get(textNodeRepr).toOption if domNode.isInstanceOf[raw.Text]
         } yield {
           if (textNodeRepr.text != text) {
+            println(s"text=$text")
             domNode.asInstanceOf[raw.Text].data = text
             val repr = TextRepr(text, key)
             elementMapping.set(repr, domNode)
-            (domNode, repr)
-          } else (domNode, textNodeRepr)
+            (domNode, repr, 1)
+          } else (domNode, textNodeRepr, 1)
         }).getOrElse({
-          println("+$text")
-          (document.createTextNode(text), TextRepr(text, key))
+          println(s"+text=$text")
+          (document.createTextNode(text), TextRepr(text, key), 1)
         })
     }
 
     nodeReprCache.set(vnode, vnodeRepr)
     elementMapping.set(vnodeRepr, node)
 
-    if (nodeIndex >= container.childElementCount) container.appendChild(node)
-    else {
-      val existingNode = container.childNodes(nodeIndex)
-      if (!(existingNode eq node)) container.insertBefore(node, existingNode)
+    if (!node.eq(container)) {
+      if (containerIndex >= container.childElementCount) container.appendChild(node)
+      else {
+        val existingNode = container.childNodes(containerIndex)
+        if (!(existingNode eq node)) container.insertBefore(node, existingNode)
+      }
     }
 
-    vnodeRepr
+    (vnodeRepr, nodeCount)
   }
 
-  private def reconcileNodeSeq(currentVDom: Seq[Node], vdom: Seq[Node], container: raw.Node with raw.ParentNode,
-                               eventDispatcher: EventDispatcher): Seq[NodeRepr] = {
+  private def reconcileNodeSeq(currentVDom: Seq[Node], vdom: Seq[Node], offset: Int, container: raw.Node with raw.ParentNode,
+                               eventDispatcher: EventDispatcher): (Seq[NodeRepr], Int) = {
     var auxId = 0
     def nodeKey(n: Node) = n.key.getOrElse({ auxId += 1; "$" + auxId.toString})
     val vdomCurrMap = currentVDom.zipWithIndex.map(ni ⇒ nodeKey(ni._1) → ni).toMap
 
     auxId = 0
-    val vdomRepr = for ((vnode, nodeIndex) ← vdom.zipWithIndex) yield {
+    var index = 0
+    val vdomRepr = for (vnode ← vdom) yield {
       val key = nodeKey(vnode)
       val vnodeCurrOpt = vdomCurrMap.get(key)
       val (vnodeUnwrapped, vnodeCurrUnwrappedOpt) = unwrapComponent(vnode, vnodeCurrOpt.map(_._1))
@@ -178,14 +187,19 @@ object DomReconciler {
         vnodeCurrUnwrapped ← vnodeCurrUnwrappedOpt
         reprCurr ← nodeReprCache.get(vnodeCurrUnwrapped).toOption
       } yield (vnodeCurrUnwrapped, reprCurr, vnodeCurrIndex)
-      reconcileNode(vnodeUnwrapped, nodeIndex, container, key, matchingNodeOpt, eventDispatcher)
+      val (repr, nodeCount) = reconcileNode(vnodeUnwrapped, index, offset, container, key, matchingNodeOpt, eventDispatcher)
+      index += nodeCount
+      repr
     }
 
-    for (i ← vdom.length until container.childElementCount) {
-      println("-")
-      container.removeChild(container.lastChild)
+    if (offset == 0) {
+      for (i ← index until container.childElementCount) {
+        println("-")
+        container.removeChild(container.lastChild)
+      }
     }
-    vdomRepr
+
+    (vdomRepr, index)
   }
 
 }

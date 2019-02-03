@@ -22,6 +22,8 @@ package object example {
         editingTask = Task("", completed = false),
         editingIndex = None
       )
+    case TaskDeleteEvent(index) ⇒ TasksState.tasks.modify(tasks ⇒ tasks.take(index)
+      ++ (if (index < tasks.length - 1) tasks.slice(index + 1, tasks.length) else Nil))
     case ShowMessage(msg) ⇒ TasksState.message.set(Some(msg))
   })
 

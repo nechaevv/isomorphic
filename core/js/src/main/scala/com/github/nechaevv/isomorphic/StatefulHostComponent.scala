@@ -31,7 +31,6 @@ abstract class StatefulHostCustomElement[T <: StatefulHostComponent](val webComp
 
 
   def connectedCallback(): Unit = {
-    println("Connected")
     EventReducerPipeline.run[webComponent.State](
       webComponent.render(this),
       webComponent.reducer,
