@@ -15,9 +15,9 @@ object TaskEditComponent {
 
   def apply(): Component[Task, TagNode] = { task ⇒
     form(
-      input.props('type := "text", 'value := task.name, nameController),
-      input.props('type := "checkbox", 'checked := (if (task.completed) "checked" else ""), completedController),
-      button.props('type := "button", saveController)("SAVE")
+      input.attr('type := "text", 'value := task.name, nameController),
+      input.attr('type := "checkbox", 'checked := (if (task.completed) "checked" else ""), completedController),
+      button.attr('type := "button", saveController)("SAVE")
     )
   }
 }

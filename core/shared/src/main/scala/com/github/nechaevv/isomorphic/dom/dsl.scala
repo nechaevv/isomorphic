@@ -8,7 +8,7 @@ sealed trait Node {
 
 case class TagNode(name: String, properties: Seq[NodeProperty] = Nil, children: Seq[Node] = Nil, key: Option[String] = None) extends Node {
   def withKey(k: String): TagNode = this.copy(key = Some(k))
-  def props(newProperties: NodeProperty*): TagNode = this.copy(properties = newProperties)
+  def attr(newProperties: NodeProperty*): TagNode = this.copy(properties = newProperties)
   def apply(newChildren: Node*): TagNode = this.copy(children = newChildren)
 }
 case class TextNode(text: String) extends Node {
@@ -37,4 +37,6 @@ object dsl {
   }
   implicit def textToNode(text: String): Node = TextNode(text)
   def fragment(children: Node*): FragmentNode = FragmentNode(children)
+  implicit def seqToNode(seq: Seq[Node]): FragmentNode = FragmentNode(seq)
+  implicit def optionToNode(o: Option[Node]): FragmentNode = FragmentNode(o.toSeq)
 }

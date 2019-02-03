@@ -6,16 +6,18 @@ import tags._
 
 object AppComponent extends Component[TasksState, FragmentNode] {
   override def apply(state: TasksState): FragmentNode = fragment(
-    section.props('class := "header")(
+    section.attr('class := "header")(
       h1("ToDo sample app"),
-      div("Selected item:", span(state.editingIndex.toString))
+      state.editingIndex.map(i ⇒ p(
+        "Selected item:",
+        span(i.toString)
+      ))
     ),
     TaskListComponent() << state.tasks,
     TaskEditComponent() << state.editingTask,
-    div.props('class := "message")(
+    state.message.map(msg ⇒ p.attr('class := "message")(
       "Message:",
-      span(state.message.toString)
-    )
-//    state.message.map(msg ⇒ p(msg))
+      span(msg)
+    ))
   )
 }

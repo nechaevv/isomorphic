@@ -8,7 +8,7 @@ import com.github.nechaevv.isomorphic.dom.tags._
 object StaticTestComponent extends dom.Component[Unit, FragmentNode] {
 
   override def apply(v1: Unit): FragmentNode = fragment(
-    div.props('class := "qwerty")(
+    div.attr('class := "qwerty")(
       h1("Hello, World!"),
       h2("Hello again!")
     )

@@ -16,13 +16,13 @@ object TaskListComponent {
     ul(
       (for ((task, index) ← tasks.zipWithIndex) yield {
         val taskListController: NodeEventListener = DOMEventTypes.Click → TaskClickHandler(index)
-        li.withKey(index.toString).props(
+        li.withKey(index.toString).attr(
           'class := (if (task.completed) "completed" else "uncompleted"),
           taskListController
         )(
-          span.props('class := "number")(index.toString),
+          span.attr('class := "number")(index.toString),
           " - ",
-          span.props('class := "name")(task.name)
+          span.attr('class := "name")(task.name)
         )
       }): _*
     )
