@@ -57,8 +57,8 @@ object DomReconciler {
   }
 
   private def addEventListener(listener: NodeEventListener, elem: raw.Element, eventDispatcher: EventDispatcher): Unit = {
-    val eventListenerFn = (e: raw.Event) ⇒ listener.handler(e).through(eventDispatcher.enqueue).compile.drain
-      .unsafeRunAsyncAndForget()
+    val eventListenerFn: js.Function1[raw.Event, Unit] = e ⇒ listener.handler(e)
+      .through(eventDispatcher.enqueue).compile.drain.unsafeRunAsyncAndForget()
     listenerMapping.set(listener, eventListenerFn)
     elem.addEventListener(
       listener.eventType.name.toLowerCase,
@@ -92,10 +92,20 @@ object DomReconciler {
           else {
             val elem = domNodeCurr.asInstanceOf[raw.Element]
             val (attrs, listeners) = tagProps(props)
-            for ((k, v) ← attrs) if (!tagReprCurr.attrs.get(k).contains(v)) elem.setAttribute(k, v)
+            for ((k, v) ← attrs) if (!tagReprCurr.attrs.get(k).contains(v)) {
+              elem.setAttribute(k, v)
+              if (k == "value") elem match {
+                case input: raw.HTMLInputElement ⇒ if (input.value != v) input.value = v
+                case _ ⇒
+              }
+            }
             for (k ← tagReprCurr.attrs.keys) if (!attrs.contains(k)) elem.removeAttribute(k)
-            for (lsn ← listeners) if (!tagReprCurr.eventListeners.contains(lsn)) addEventListener(lsn, elem, eventDispatcher)
+            for (lsn ← listeners) if (!tagReprCurr.eventListeners.contains(lsn)) {
+              println(s"+listener($name,${lsn.eventType.name})")
+              addEventListener(lsn, elem, eventDispatcher)
+            }
             for (lsn ← tagReprCurr.eventListeners) if (!listeners.contains(lsn)) {
+              println(s"-listener($name,${lsn.eventType.name})")
               elem.removeEventListener(lsn.eventType.name.toLowerCase, listenerMapping.get(lsn).get, lsn.eventType.isCapturing)
             }
             (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(tagNodeCurr.children, children, elem, eventDispatcher), key))

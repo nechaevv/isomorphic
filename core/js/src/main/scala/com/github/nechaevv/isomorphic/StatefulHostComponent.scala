@@ -13,8 +13,8 @@ trait StatefulHostComponent {
 
   def attributes: Iterable[String] = Seq.empty
   def initialState(properties: Iterable[(String, String)]): State
-  def reducer: Any ⇒ State ⇒ State
-  def effect: Any ⇒ State ⇒ EventStream
+  def reducer: Any ⇒ State ⇒ State = _ ⇒ s ⇒ s
+  def effect: Any ⇒ State ⇒ EventStream = _ ⇒ _ ⇒ fs2.Stream.empty
   def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit
 
   def connectedEffect: Option[Any] = None

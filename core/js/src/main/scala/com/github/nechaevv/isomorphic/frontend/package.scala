@@ -12,5 +12,4 @@ package object frontend {
   implicit class PimpedEventType(eventType: DOMEventType) {
     def → (handler: EventHandler): EventListener = EventListener(eventType, handler)
   }
-
 }
