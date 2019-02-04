@@ -1,6 +1,6 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.{AutonomousCustomElement, DomReconcilerRender, ReactRender, StatefulHostComponent}
+import com.github.nechaevv.isomorphic.{AutonomousCustomElement, DomReconcilerRender, StatefulHostComponent}
 
 object TasksApp extends StatefulHostComponent with AutonomousCustomElement with DomReconcilerRender {
 

@@ -3,61 +3,61 @@ package com.github.nechaevv.isomorphic.dom
 import com.github.nechaevv.isomorphic.EventDispatcher
 import com.github.nechaevv.isomorphic.api.WeakMap
 import org.scalajs.dom.document
-import org.scalajs.dom.raw
+import org.scalajs.dom.raw._
 
 import scala.scalajs.js
 
 object DomReconciler {
 
-  private val componentCache = new WeakMap[ComponentNode[Any, Node], Node]
-  private val nodeReprCache = new WeakMap[Node, NodeRepr]
-  private val elementMapping = new WeakMap[NodeRepr, raw.Node]
-  private val listenerMapping = new WeakMap[NodeEventListener, js.Function1[raw.Event, Unit]]
-  private val rootVDom = new WeakMap[raw.Node, ComponentNode[Any, FragmentNode]]
+  private val componentCache = new WeakMap[ComponentVNode[Any, VNode], VNode]
+  private val nodeReprCache = new WeakMap[VNode, VNodeRepr]
+  private val elementMapping = new WeakMap[VNodeRepr, Node]
+  private val listenerMapping = new WeakMap[VNodeEventListener, js.Function1[Event, Unit]]
+  private val rootVDom = new WeakMap[Node, ComponentVNode[Any, FragmentVNode]]
 
-  trait NodeRepr {
+  trait VNodeRepr {
     def key: String
   }
 
-  case class TagRepr(name: String, attrs: Map[String, String], eventListeners: Set[NodeEventListener],
-                     children: Seq[NodeRepr], key: String) extends NodeRepr
-  case class FragmentRepr(children: Seq[NodeRepr], key: String) extends NodeRepr
-  case class TextRepr(text:String, key: String) extends NodeRepr
+  case class ElementRepr(name: String, attrs: Map[String, String], eventListeners: Set[VNodeEventListener],
+                         children: Seq[VNode], key: String) extends VNodeRepr
+  case class FragmentRepr(children: Seq[VNode], key: String) extends VNodeRepr
+  case class TextRepr(text:String, key: String) extends VNodeRepr
 
-  def reconcileRootComponent[S](rootElement: raw.Node with raw.ParentNode, vdomComp: ComponentNode[S, FragmentNode], eventDispatcher: EventDispatcher): Unit = {
-    val vdomComponentCurr = rootVDom.get(rootElement).toOption.asInstanceOf[Option[ComponentNode[S, FragmentNode]]]
+  def reconcileRootComponent[S](rootElement: Node with ParentNode, vdomComp: ComponentVNode[S, FragmentVNode], eventDispatcher: EventDispatcher): Unit = {
+    val vdomComponentCurr = rootVDom.get(rootElement).toOption.asInstanceOf[Option[ComponentVNode[S, FragmentVNode]]]
     val (vdom, vdomCurr) = evalComponent(vdomComp, vdomComponentCurr)
     if (!vdomCurr.exists(_ eq vdom)) {
       reconcileNodeSeq(vdomCurr.map(_.children).getOrElse(Nil), vdom.children, 0, rootElement, eventDispatcher)
-      rootVDom.set(rootElement, vdomComp.asInstanceOf[ComponentNode[Any, FragmentNode]])
+      rootVDom.set(rootElement, vdomComp.asInstanceOf[ComponentVNode[Any, FragmentVNode]])
     }
   }
 
-  def evalComponent[S, N <: Node](vnode: ComponentNode[S, N], vnodeCurrOpt: Option[ComponentNode[S, N]]): (N, Option[N]) = {
+  def evalComponent[S, N <: VNode](vnode: ComponentVNode[S, N], vnodeCurrOpt: Option[ComponentVNode[S, N]]): (N, Option[N]) = {
     (for {
       vnodeCurr ← vnodeCurrOpt
-      cached ← componentCache.get(vnodeCurr.asInstanceOf[ComponentNode[Any, Node]]).toOption
+      cached ← componentCache.get(vnodeCurr.asInstanceOf[ComponentVNode[Any, VNode]]).toOption
     } yield (cached.asInstanceOf[N], vnodeCurr.state)) match {
       case Some((cached, prevState)) if prevState == vnode.state ⇒
-        componentCache.set(vnode.asInstanceOf[ComponentNode[Any, Node]], cached)
+        componentCache.set(vnode.asInstanceOf[ComponentVNode[Any, VNode]], cached)
         (cached, Some(cached))
       case other ⇒
         val result = vnode.component(vnode.state)
-        componentCache.set(vnode.asInstanceOf[ComponentNode[Any, Node]], result)
+        componentCache.set(vnode.asInstanceOf[ComponentVNode[Any, VNode]], result)
         (result, other.map(_._1))
     }
   }
 
-  private def unwrapComponent[S, N <: Node](vnode: Node, vnodeCurr: Option[Node]): (Node, Option[Node]) = vnode match {
-    case cn: ComponentNode[S, N] ⇒
-      val componentNodeCurr = vnodeCurr.asInstanceOf[Option[ComponentNode[S, N]]]
+  private def unwrapComponent[S, N <: VNode](vnode: VNode, vnodeCurr: Option[VNode]): (VNode, Option[VNode]) = vnode match {
+    case cn: ComponentVNode[S, N] ⇒
+      val componentNodeCurr = vnodeCurr.asInstanceOf[Option[ComponentVNode[S, N]]]
       val (unwrapNode, unwrapCurr) = evalComponent(cn, componentNodeCurr)
       unwrapComponent(unwrapNode, unwrapCurr)
     case _ ⇒ (vnode, vnodeCurr)
   }
 
-  private def addEventListener(listener: NodeEventListener, elem: raw.Element, eventDispatcher: EventDispatcher): Unit = {
-    val eventListenerFn: js.Function1[raw.Event, Unit] = e ⇒ listener.handler(e)
+  private def addEventListener(listener: VNodeEventListener, elem: Element, eventDispatcher: EventDispatcher): Unit = {
+    val eventListenerFn: js.Function1[Event, Unit] = e ⇒ listener.handler(e)
       .through(eventDispatcher.enqueue).compile.drain.unsafeRunAsyncAndForget()
     listenerMapping.set(listener, eventListenerFn)
     elem.addEventListener(
@@ -67,42 +67,58 @@ object DomReconciler {
     )
   }
 
-  private def tagProps(props: Seq[NodeProperty]): (Map[String, String], Set[NodeEventListener]) = {
-    (
-      props.collect({
-        case NodeAttribute(attrName, value) ⇒ attrName → value
-      }).toMap,
-      props.collect({
-        case e: NodeEventListener ⇒ e
-      }).toSet
-    )
+  private def elementProperties(modifiers: Seq[VNodeModifier]): (Map[String, String], Set[VNodeEventListener], Seq[VNode]) = {
+    val (attributes, listeners, children) = modifiers.foldLeft(
+      (List.empty[(String, String)], List.empty[VNodeEventListener], List.empty[VNode])
+    ) { (acc, modifier) ⇒
+      val (attrs, lsnrs, chldrn) = acc
+      modifier match {
+        case VNodeAttribute(attrName, value) ⇒ ((attrName, value) :: attrs, lsnrs, chldrn)
+        case e: VNodeEventListener ⇒ (attrs, e :: lsnrs, chldrn)
+        case VNodeChild(childNode) ⇒ (attrs, lsnrs, childNode :: chldrn)
+        case _ ⇒ acc
+      }
+    }
+    (attributes.toMap, listeners.toSet, children.reverse)
   }
 
-  private def reconcileNode(vnode: Node, nodeIndex: Int, offset: Int, container: raw.Node with raw.ParentNode, key: String,
-                            matchingNodeOpt: Option[(Node, NodeRepr, Int)], eventDispatcher: EventDispatcher): (NodeRepr, Int) = {
+  def syncAttributeChange(elem: Element, name: String, value: Option[String]): Unit = {
+    elem match {
+      case input: HTMLInputElement ⇒ name match {
+        case "value" ⇒
+          val newValue = value.getOrElse("")
+          if (input.value != newValue) input.value = newValue
+        case "checked" if input.`type` == "checkbox" ⇒
+          if (input.checked != value.nonEmpty) input.checked = value.nonEmpty
+        case _ ⇒
+      }
+      case _ ⇒
+    }
+  }
+
+  private def reconcileNode(vnode: VNode, nodeIndex: Int, offset: Int, container: Node with ParentNode, key: String,
+                            matchingNodeOpt: Option[(VNode, VNodeRepr)], eventDispatcher: EventDispatcher): Int = {
     val containerIndex = offset + nodeIndex
     val (node, vnodeRepr, nodeCount) = vnode match {
-      case _: ComponentNode[_, _] ⇒ throw new RuntimeException("Component node not expected")
-      case tn @ TagNode(name, props, children, _) ⇒
+      case _: ComponentVNode[_, _] ⇒ throw new RuntimeException("Component node not expected")
+      case tn @ ElementVNode(name, modifiers, _) ⇒
         (for {
-          (tagNodeCurr: TagNode, tagReprCurr: TagRepr, tagIndexCurr) ← matchingNodeOpt if tagReprCurr.name == name
+          (tagNodeCurr: ElementVNode, tagReprCurr: ElementRepr) ← matchingNodeOpt if tagReprCurr.name == name
           domNodeCurr ← elementMapping.get(tagReprCurr).toOption
         } yield {
           if (tagNodeCurr eq tn) (domNodeCurr, tagReprCurr, 1)
           else {
-            val elem = domNodeCurr.asInstanceOf[raw.Element]
-            val (attrs, listeners) = tagProps(props)
-            for ((k, v) ← attrs) if (!tagReprCurr.attrs.get(k).contains(v)) {
+            val elem = domNodeCurr.asInstanceOf[Element]
+            val (attributes, listeners, children) = elementProperties(modifiers)
+            for ((k, v) ← attributes) if (!tagReprCurr.attrs.get(k).contains(v)) {
               println(s"+attr($name, $k, $v)")
               elem.setAttribute(k, v)
-              if (k == "value") elem match {
-                case input: raw.HTMLInputElement ⇒ if (input.value != v) input.value = v
-                case _ ⇒
-              }
+              syncAttributeChange(elem, k, Some(v))
             }
-            for (k ← tagReprCurr.attrs.keys) if (!attrs.contains(k)) {
+            for (k ← tagReprCurr.attrs.keys) if (!attributes.contains(k)) {
               println(s"-attr($name, $k)")
               elem.removeAttribute(k)
+              syncAttributeChange(elem, k, None)
             }
             for (lsn ← listeners) if (!tagReprCurr.eventListeners.contains(lsn)) {
               println(s"+listener($name,${lsn.eventType.name})")
@@ -112,40 +128,42 @@ object DomReconciler {
               println(s"-listener($name,${lsn.eventType.name})")
               elem.removeEventListener(lsn.eventType.name.toLowerCase, listenerMapping.get(lsn).get, lsn.eventType.isCapturing)
             }
-            (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(tagNodeCurr.children, children, 0, elem, eventDispatcher)._1, key), 1)
+            reconcileNodeSeq(tagReprCurr.children, children, 0, elem, eventDispatcher)
+            (elem, ElementRepr(name, attributes, listeners, children, key), 1)
           }
         }).getOrElse({
           println(s"+$name")
           val elem = document.createElement(name)
-          val (attrs, listeners) = tagProps(props)
-          for ((k, v) ← attrs) elem.setAttribute(k, v)
+          val (attributes, listeners, children) = elementProperties(modifiers)
+          for ((k, v) ← attributes) elem.setAttribute(k, v)
           for (lsn ← listeners) addEventListener(lsn, elem, eventDispatcher)
-          (elem, TagRepr(name, attrs, listeners, reconcileNodeSeq(Nil, children, 0, elem, eventDispatcher)._1, key), 1)
+          reconcileNodeSeq(Nil, children, 0, elem, eventDispatcher)
+          (elem, ElementRepr(name, attributes, listeners, children, key), 1)
         })
 
-      case fn @ FragmentNode(children, _) ⇒
+      case fn @ FragmentVNode(children, _) ⇒
         (for {
-          (fragNode: FragmentNode, fragNodeRepr: FragmentRepr, tagNodeIndex) ← matchingNodeOpt
+          (fragNode: FragmentVNode, fragNodeRepr: FragmentRepr) ← matchingNodeOpt
         } yield {
           if (fragNode eq fn) (container, fragNodeRepr, fragNodeRepr.children.length)
           else {
-            val (repr, nodeCount) = reconcileNodeSeq(fragNode.children, children, containerIndex, container, eventDispatcher)
-            (container, FragmentRepr(repr, key), nodeCount)
+            val nodeCount = reconcileNodeSeq(fragNode.children, children, containerIndex, container, eventDispatcher)
+            (container, FragmentRepr(children, key), nodeCount)
           }
         }).getOrElse({
           println("+$fragment")
-          val (repr, nodeCount) = reconcileNodeSeq(Nil, children, containerIndex, container, eventDispatcher)
-          (container, FragmentRepr(repr, key), nodeCount)
+          val nodeCount = reconcileNodeSeq(Nil, children, containerIndex, container, eventDispatcher)
+          (container, FragmentRepr(children, key), nodeCount)
         })
 
-      case TextNode(text) ⇒
+      case TextVNode(text) ⇒
         (for {
-          (textNode: TextNode, textNodeRepr: TextRepr, textNodeIndex) ← matchingNodeOpt
-          domNode ← elementMapping.get(textNodeRepr).toOption if domNode.isInstanceOf[raw.Text]
+          (_, textNodeRepr: TextRepr) ← matchingNodeOpt
+          domNode ← elementMapping.get(textNodeRepr).toOption if domNode.isInstanceOf[Text]
         } yield {
           if (textNodeRepr.text != text) {
             println(s"text=$text")
-            domNode.asInstanceOf[raw.Text].data = text
+            domNode.asInstanceOf[Text].data = text
             val repr = TextRepr(text, key)
             elementMapping.set(repr, domNode)
             (domNode, repr, 1)
@@ -167,29 +185,27 @@ object DomReconciler {
       }
     }
 
-    (vnodeRepr, nodeCount)
+    nodeCount
   }
 
-  private def reconcileNodeSeq(currentVDom: Seq[Node], vdom: Seq[Node], offset: Int, container: raw.Node with raw.ParentNode,
-                               eventDispatcher: EventDispatcher): (Seq[NodeRepr], Int) = {
+  private def reconcileNodeSeq(currentVDom: Seq[VNode], vdom: Seq[VNode], offset: Int, container: Node with ParentNode,
+                               eventDispatcher: EventDispatcher): Int = {
     var auxId = 0
-    def nodeKey(n: Node) = n.key.getOrElse({ auxId += 1; "$" + auxId.toString})
-    val vdomCurrMap = currentVDom.zipWithIndex.map(ni ⇒ nodeKey(ni._1) → ni).toMap
+    def nodeKey(n: VNode) = n.key.getOrElse({ auxId += 1; "$" + auxId.toString})
+    val vdomCurrMap = currentVDom.map(ni ⇒ nodeKey(ni) → ni).toMap
 
     auxId = 0
     var index = 0
-    val vdomRepr = for (vnode ← vdom) yield {
+    for (vnode ← vdom) {
       val key = nodeKey(vnode)
       val vnodeCurrOpt = vdomCurrMap.get(key)
-      val (vnodeUnwrapped, vnodeCurrUnwrappedOpt) = unwrapComponent(vnode, vnodeCurrOpt.map(_._1))
+      val (vnodeUnwrapped, vnodeCurrUnwrappedOpt) = unwrapComponent(vnode, vnodeCurrOpt)
       val matchingNodeOpt = for {
-        (_, vnodeCurrIndex) ← vnodeCurrOpt
         vnodeCurrUnwrapped ← vnodeCurrUnwrappedOpt
         reprCurr ← nodeReprCache.get(vnodeCurrUnwrapped).toOption
-      } yield (vnodeCurrUnwrapped, reprCurr, vnodeCurrIndex)
-      val (repr, nodeCount) = reconcileNode(vnodeUnwrapped, index, offset, container, key, matchingNodeOpt, eventDispatcher)
+      } yield (vnodeCurrUnwrapped, reprCurr)
+      val nodeCount = reconcileNode(vnodeUnwrapped, index, offset, container, key, matchingNodeOpt, eventDispatcher)
       index += nodeCount
-      repr
     }
 
     if (offset == 0) {
@@ -199,7 +215,7 @@ object DomReconciler {
       }
     }
 
-    (vdomRepr, index)
+    index
   }
 
 }

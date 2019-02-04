@@ -4,7 +4,6 @@ import cats.effect.IO
 import com.github.nechaevv.isomorphic.dom._
 import com.github.nechaevv.isomorphic.dom.browser._
 import com.github.nechaevv.isomorphic.frontend.DOMEventTypes
-import dsl._
 import tags._
 import org.scalajs.dom.Event
 
@@ -15,19 +14,18 @@ object TaskListComponent {
   case class TaskDeleteClickHandler(index: Int) extends EventHandler {
     override def apply(e: Event): fs2.Stream[IO, Any] = fs2.Stream(TaskDeleteEvent(index))
   }
-  def apply(): Component[Seq[Task], TagNode] = { tasks ⇒
+  def apply(): Component[Seq[Task], ElementVNode] = { tasks ⇒
     ul(
       for ((task, index) ← tasks.zipWithIndex) yield {
-        val taskClickController: NodeEventListener = DOMEventTypes.Click → TaskClickHandler(index)
-        val taskDeleteClickController: NodeEventListener = DOMEventTypes.Click → TaskDeleteClickHandler(index)
-        li.withKey(index.toString).attr(
+        val taskClickController: VNodeEventListener = DOMEventTypes.Click → TaskClickHandler(index)
+        val taskDeleteClickController: VNodeEventListener = DOMEventTypes.Click → TaskDeleteClickHandler(index)
+        li.withKey(index.toString)(
           'class := (if (task.completed) "completed" else "uncompleted"),
-        )(
-          span.attr('class := "number")(index.toString),
+          span('class := "number", index.toString),
           " - ",
-          span.attr('class := "name", taskClickController)(task.name),
+          span('class := "name", taskClickController, task.name),
           " ",
-          button.attr(taskDeleteClickController)("DEL")
+          button(taskDeleteClickController, "DEL")
         )
       }
     )

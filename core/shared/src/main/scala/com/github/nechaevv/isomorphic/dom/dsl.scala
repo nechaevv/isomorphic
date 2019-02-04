@@ -2,44 +2,28 @@ package com.github.nechaevv.isomorphic.dom
 
 import scala.language.implicitConversions
 
-sealed trait Node {
+sealed trait VNode {
   def key: Option[String]
 }
 
-case class TagNode(name: String, properties: Seq[NodeProperty] = Nil, children: Seq[Node] = Nil, key: Option[String] = None) extends Node {
-  def withKey(k: String): TagNode = this.copy(key = Some(k))
-  def attr(newProperties: NodeProperty*): TagNode = this.copy(properties = newProperties)
-  def apply(newChildren: Node*): TagNode = this.copy(children = newChildren)
+case class ElementVNode(name: String, properties: Seq[VNodeModifier] = Nil, key: Option[String] = None) extends VNode {
+  def withKey(k: String): ElementVNode = this.copy(key = Some(k))
+  def apply(newProperties: VNodeModifier*): ElementVNode = this.copy(properties = newProperties)
 }
-case class TextNode(text: String) extends Node {
+case class TextVNode(text: String) extends VNode {
   override def key: Option[String] = None
 }
-case class ComponentNode[S, +N <: Node](component: Component[S, N], state: S, key: Option[String] = None) extends Node {
-  def withKey(k: String): ComponentNode[S, N] = this.copy(key = Some(k))
+case class ComponentVNode[S, +N <: VNode](component: Component[S, N], state: S, key: Option[String] = None) extends VNode {
+  def withKey(k: String): ComponentVNode[S, N] = this.copy(key = Some(k))
   def eval(): N = component(state)
 }
-case class FragmentNode(children: Seq[Node], key: Option[String] = None) extends Node {
-  def withKey(k: String): FragmentNode = this.copy(key = Some(k))
+case class FragmentVNode(children: Seq[VNode], key: Option[String] = None) extends VNode {
+  def withKey(k: String): FragmentVNode = this.copy(key = Some(k))
 }
 
-trait NodeProperty
+trait VNodeModifier
 
-case class NodeAttribute(name: String, value: String) extends NodeProperty
-case class NodeClass(name: String) extends NodeProperty
-case object EmptyProperty extends NodeProperty
-
-object dsl {
-  implicit class PimpedString(s: String) {
-    def :=(value: String): NodeAttribute = NodeAttribute(s, value)
-    def :=(value: Boolean): NodeAttribute = NodeAttribute(s, if (value) "true" else "false")
-    def ?=(value: Boolean): NodeProperty = if (value) NodeAttribute(s, "") else EmptyProperty
-  }
-  implicit class PimpedSymbol(s: Symbol) extends PimpedString(s.name)
-  implicit class PimpedComponent[S, N <: Node](c: Component[S, N]) {
-    def << (state: S): ComponentNode[S, N] = ComponentNode(c, state)
-  }
-  implicit def textToNode(text: String): Node = TextNode(text)
-  def fragment(children: Node*): FragmentNode = FragmentNode(children)
-  implicit def seqToNode(seq: Seq[Node]): FragmentNode = FragmentNode(seq)
-  implicit def optionToNode(o: Option[Node]): FragmentNode = FragmentNode(o.toSeq)
-}
+case class VNodeAttribute(name: String, value: String) extends VNodeModifier
+case class VNodeClass(name: String) extends VNodeModifier
+case class VNodeChild(node: VNode) extends VNodeModifier
+case object EmptyModifier extends VNodeModifier

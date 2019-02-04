@@ -8,6 +8,6 @@ object browser {
   type EventHandler = Event ⇒ fs2.Stream[IO, Any]
 
   implicit class PimpedEventType(eventType: DOMEventType) {
-    def → (handler: EventHandler): NodeEventListener = NodeEventListener(eventType, handler)
+    def → (handler: EventHandler): VNodeEventListener = VNodeEventListener(eventType, handler)
   }
 }
