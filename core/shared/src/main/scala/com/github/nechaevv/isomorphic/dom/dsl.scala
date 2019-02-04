@@ -26,10 +26,13 @@ trait NodeProperty
 
 case class NodeAttribute(name: String, value: String) extends NodeProperty
 case class NodeClass(name: String) extends NodeProperty
+case object EmptyProperty extends NodeProperty
 
 object dsl {
   implicit class PimpedString(s: String) {
     def :=(value: String): NodeAttribute = NodeAttribute(s, value)
+    def :=(value: Boolean): NodeAttribute = NodeAttribute(s, if (value) "true" else "false")
+    def ?=(value: Boolean): NodeProperty = if (value) NodeAttribute(s, "") else EmptyProperty
   }
   implicit class PimpedSymbol(s: Symbol) extends PimpedString(s.name)
   implicit class PimpedComponent[S, N <: Node](c: Component[S, N]) {
