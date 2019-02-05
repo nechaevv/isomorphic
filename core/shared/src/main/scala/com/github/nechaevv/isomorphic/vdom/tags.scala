@@ -1,4 +1,4 @@
-package com.github.nechaevv.isomorphic.dom
+package com.github.nechaevv.isomorphic.vdom
 
 object tags {
   val a      = ElementVNode("a")

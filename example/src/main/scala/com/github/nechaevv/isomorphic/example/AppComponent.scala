@@ -1,11 +1,11 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.dom._
+import com.github.nechaevv.isomorphic.vdom._
 import tags._
 
 object AppComponent extends Component[TasksState, FragmentVNode] {
   override def apply(state: TasksState): FragmentVNode = fragment(
-    section('class := "header",
+    section(classes += "header",
       h1("ToDo sample app"),
       state.editingIndex.map(i ⇒ p(
         "Selected item:",
@@ -14,7 +14,7 @@ object AppComponent extends Component[TasksState, FragmentVNode] {
     ),
     TaskListComponent() << state.tasks,
     TaskEditComponent() << state.editingTask,
-    state.message.map(msg ⇒ p('class := "message",
+    state.message.map(msg ⇒ p(classes += "message",
       "Message:",
       span(msg)
     ))

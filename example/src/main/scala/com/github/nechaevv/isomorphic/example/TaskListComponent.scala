@@ -1,8 +1,8 @@
 package com.github.nechaevv.isomorphic.example
 
 import cats.effect.IO
-import com.github.nechaevv.isomorphic.dom._
-import com.github.nechaevv.isomorphic.dom.browser._
+import com.github.nechaevv.isomorphic.vdom._
+import com.github.nechaevv.isomorphic.vdom.browser._
 import com.github.nechaevv.isomorphic.frontend.DOMEventTypes
 import tags._
 import org.scalajs.dom.Event

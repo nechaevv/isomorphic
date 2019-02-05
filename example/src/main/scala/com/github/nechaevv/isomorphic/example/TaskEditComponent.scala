@@ -1,7 +1,7 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.dom._
-import com.github.nechaevv.isomorphic.dom.browser._
+import com.github.nechaevv.isomorphic.vdom._
+import com.github.nechaevv.isomorphic.vdom.browser._
 import com.github.nechaevv.isomorphic.frontend.DOMEventTypes
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement

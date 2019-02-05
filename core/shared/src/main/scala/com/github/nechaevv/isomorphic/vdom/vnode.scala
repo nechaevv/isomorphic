@@ -1,4 +1,4 @@
-package com.github.nechaevv.isomorphic.dom
+package com.github.nechaevv.isomorphic.vdom
 
 import scala.language.implicitConversions
 
@@ -6,9 +6,9 @@ sealed trait VNode {
   def key: Option[String]
 }
 
-case class ElementVNode(name: String, properties: Seq[VNodeModifier] = Nil, key: Option[String] = None) extends VNode {
+case class ElementVNode(name: String, modifiers: Seq[VNodeModifier] = Nil, key: Option[String] = None) extends VNode {
   def withKey(k: String): ElementVNode = this.copy(key = Some(k))
-  def apply(newProperties: VNodeModifier*): ElementVNode = this.copy(properties = newProperties)
+  def apply(newModifiers: VNodeModifier*): ElementVNode = this.copy(modifiers = modifiers ++ newModifiers)
 }
 case class TextVNode(text: String) extends VNode {
   override def key: Option[String] = None

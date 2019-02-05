@@ -1,4 +1,4 @@
-package com.github.nechaevv.isomorphic.dom
+package com.github.nechaevv.isomorphic.vdom
 
 import com.github.nechaevv.isomorphic.EventDispatcher
 import com.github.nechaevv.isomorphic.api.WeakMap
@@ -68,18 +68,23 @@ object DomReconciler {
   }
 
   private def elementProperties(modifiers: Seq[VNodeModifier]): (Map[String, String], Set[VNodeEventListener], Seq[VNode]) = {
-    val (attributes, listeners, children) = modifiers.foldLeft(
-      (List.empty[(String, String)], List.empty[VNodeEventListener], List.empty[VNode])
+    val (classes, attributes, listeners, children) = modifiers.foldLeft(
+      (List.empty[String], List.empty[(String, String)], List.empty[VNodeEventListener], List.empty[VNode])
     ) { (acc, modifier) ⇒
-      val (attrs, lsnrs, chldrn) = acc
+      val (clss, attrs, lsnrs, chldrn) = acc
       modifier match {
-        case VNodeAttribute(attrName, value) ⇒ ((attrName, value) :: attrs, lsnrs, chldrn)
-        case e: VNodeEventListener ⇒ (attrs, e :: lsnrs, chldrn)
-        case VNodeChild(childNode) ⇒ (attrs, lsnrs, childNode :: chldrn)
+        case VNodeClass(name) ⇒ (name :: clss, attrs, lsnrs, chldrn)
+        case VNodeAttribute(attrName, value) ⇒ (clss, (attrName, value) :: attrs, lsnrs, chldrn)
+        case e: VNodeEventListener ⇒ (clss, attrs, e :: lsnrs, chldrn)
+        case VNodeChild(childNode) ⇒ (clss, attrs, lsnrs, childNode :: chldrn)
         case _ ⇒ acc
       }
     }
-    (attributes.toMap, listeners.toSet, children.reverse)
+    (
+      (if (classes.nonEmpty) ("class", classes.mkString(" ")) :: attributes else attributes).toMap,
+      listeners.toSet,
+      children.reverse
+    )
   }
 
   def syncAttributeChange(elem: Element, name: String, value: Option[String]): Unit = {

@@ -2,7 +2,7 @@ package com.github.nechaevv.isomorphic
 
 import cats.effect.{ContextShift, IO}
 import com.github.nechaevv.isomorphic.api.{HTMLElementWithShadowRoot, ReactDOM}
-import com.github.nechaevv.isomorphic.dom.{ComponentVNode, DomReconciler, FragmentVNode, ElementVNode}
+import com.github.nechaevv.isomorphic.vdom.{ComponentVNode, DomReconciler, FragmentVNode, ElementVNode}
 import org.scalajs.dom.raw.{HTMLElement, Node}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -64,7 +64,7 @@ trait ReactRender { this: StatefulHostComponent ⇒
 }
 
 trait DomReconcilerRender { this: StatefulHostComponent ⇒
-  def rootComponent: dom.Component[State, FragmentVNode]
+  def rootComponent: vdom.Component[State, FragmentVNode]
 
   override def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit = {
     eventDispatcher ⇒ state ⇒ {
@@ -74,7 +74,7 @@ trait DomReconcilerRender { this: StatefulHostComponent ⇒
 }
 
 trait ShadowDomReconcilerRender { this: StatefulHostComponent ⇒
-  def rootComponent: dom.Component[State, FragmentVNode]
+  def rootComponent: vdom.Component[State, FragmentVNode]
   def isOpen: Boolean = false
   override def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit = {
     val shadowRoot = componentHost.asInstanceOf[HTMLElementWithShadowRoot]

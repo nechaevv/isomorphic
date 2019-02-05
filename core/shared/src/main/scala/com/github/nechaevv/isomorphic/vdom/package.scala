@@ -2,7 +2,7 @@ package com.github.nechaevv.isomorphic
 
 import scala.language.implicitConversions
 
-package object dom {
+package object vdom {
 
   type Component[-S, +N <: VNode] = S ⇒ N
 
@@ -27,5 +27,9 @@ package object dom {
   implicit def optionToVNode(o: Option[VNode]): FragmentVNode = FragmentVNode(o.toSeq)
 
   def fragment(children: VNode*): FragmentVNode = FragmentVNode(children)
+
+  object classes {
+    def +=(name: String) = VNodeClass(name)
+  }
 
 }

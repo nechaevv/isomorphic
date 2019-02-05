@@ -1,4 +1,4 @@
-package com.github.nechaevv.isomorphic.dom
+package com.github.nechaevv.isomorphic.vdom
 
 import cats.effect.IO
 import com.github.nechaevv.isomorphic.frontend.DOMEventType
