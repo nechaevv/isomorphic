@@ -48,10 +48,10 @@ object DomReconciler {
     }
   }
 
-  private def unwrapComponent[S, N <: VNode](vnode: VNode, vnodeCurr: Option[VNode]): (VNode, Option[VNode]) = vnode match {
-    case cn: ComponentVNode[S, N] ⇒
-      val componentNodeCurr = vnodeCurr.asInstanceOf[Option[ComponentVNode[S, N]]]
-      val (unwrapNode, unwrapCurr) = evalComponent(cn, componentNodeCurr)
+  private def unwrapComponent(vnode: VNode, vnodeCurr: Option[VNode]): (VNode, Option[VNode]) = vnode match {
+    case cn: ComponentVNode[_, _] ⇒
+      val (unwrapNode, unwrapCurr) = evalComponent(cn.asInstanceOf[ComponentVNode[Any, VNode]],
+        vnodeCurr.asInstanceOf[Option[ComponentVNode[Any, VNode]]])
       unwrapComponent(unwrapNode, unwrapCurr)
     case _ ⇒ (vnode, vnodeCurr)
   }
