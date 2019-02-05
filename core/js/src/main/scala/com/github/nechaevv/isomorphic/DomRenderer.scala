@@ -7,7 +7,7 @@ class DomRenderer(eventStream: EventDispatcher)  extends Renderer[Node] {
   override def element(name: String, modifiers: ElementModifier*): Node = {
     val node = document.createElement(name)
     var classes: Seq[String] = Seq.empty
-    def parseModifiers(mods: ElementModifier*): Unit = mods foreach {
+    def parseModifiers(mods: Seq[ElementModifier]): Unit = mods foreach {
       case Attribute(n, v) ⇒ node.setAttribute(n, v)
       case EventListener(e, h) ⇒ node.addEventListener(e.name.toLowerCase,
         (e: Event) ⇒ h(e).through(eventStream.enqueue).compile.drain.unsafeRunAsyncAndForget(), e.isCapturing)

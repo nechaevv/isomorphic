@@ -26,6 +26,11 @@ package object vdom {
 
   implicit def optionToVNode(o: Option[VNode]): FragmentVNode = FragmentVNode(o.toSeq)
 
+  implicit def autonomousWebComponentToVNode(webComponent: AutonomousCustomElement): ElementVNode = ElementVNode(webComponent.elementName)
+
+  implicit def extensionWebComponentToVNode(webComponent: ExtensionCustomElement): ElementVNode = ElementVNode(webComponent.extendedElement)
+    .apply(VNodeAttribute("is", webComponent.elementName))
+
   def fragment(children: VNode*): FragmentVNode = FragmentVNode(children)
 
   object classes {
