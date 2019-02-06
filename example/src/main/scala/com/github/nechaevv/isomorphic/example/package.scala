@@ -1,5 +1,7 @@
 package com.github.nechaevv.isomorphic
 
+import com.github.nechaevv.isomorphic.webcomponent.DelegatedCustomElement
+
 package object example {
   val initialTasksState = TasksState(
     tasks = Seq(
@@ -31,6 +33,6 @@ package object example {
     case TaskSaveEvent ⇒ s ⇒ fs2.Stream(ShowMessage(s"Task ${s.tasks.length} saved"))
   })
 
-  class TasksAppStatefulHostCustomElement extends StatefulHostCustomElement(TasksApp)
+  class TasksAppStatefulHostCustomElement extends DelegatedCustomElement(TasksApp.customElementDelegate)
 
 }
