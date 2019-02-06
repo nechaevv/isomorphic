@@ -35,6 +35,7 @@ package object example {
   val appEffect = combineEffects[TasksState]({
     case TaskSaveEvent ⇒ s ⇒ fs2.Stream(ShowMessage(s"Task ${s.tasks.length} saved"))
     case NavigateToDashboard ⇒ _ ⇒ Router.navigate("/dashboard")
+    case NavigateToHeroes ⇒ _ ⇒ Router.navigate("/heroes")
   })
 
   class TasksAppStatefulHostCustomElement extends DelegatedCustomElement(TasksApp.customElementDelegate)

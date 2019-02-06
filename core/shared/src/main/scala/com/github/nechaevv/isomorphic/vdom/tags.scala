@@ -13,6 +13,7 @@ object tags {
   val input  = ElementVNode("input")
   val label  = ElementVNode("label")
   val li     = ElementVNode("li")
+  val nav    = ElementVNode("nav")
   val option = ElementVNode("option")
   val p      = ElementVNode("p")
   val section= ElementVNode("section")

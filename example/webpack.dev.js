@@ -16,6 +16,7 @@ module.exports = merge(common, {
   devServer: {
     https: true,
     contentBase: './src/main/assets',
+    historyApiFallback: true
     //proxy: proxyConfig
   },
   plugins: [
