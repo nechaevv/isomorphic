@@ -26,8 +26,6 @@
     "webpack-merge": "^4.1.4"
   },
   "dependencies": {
-    "@material/theme": "^0.40.0",
-    "@material/typography": "^0.39.0",
     "document-register-element": "^1.11.1"
   }
 }

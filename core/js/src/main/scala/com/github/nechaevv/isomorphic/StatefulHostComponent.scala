@@ -1,12 +1,15 @@
 package com.github.nechaevv.isomorphic
 
-import cats.effect.{ContextShift, IO}
+import cats.effect.{Concurrent, ContextShift, IO}
 import com.github.nechaevv.isomorphic.api.{HTMLElementWithShadowRoot, ReactDOM}
-import com.github.nechaevv.isomorphic.vdom.{ComponentVNode, DomReconciler, FragmentVNode, ElementVNode}
-import org.scalajs.dom.raw.{HTMLElement, Node}
+import com.github.nechaevv.isomorphic.vdom.{ComponentVNode, DomReconciler, FragmentVNode}
+import fs2.Stream
+import fs2.concurrent.Queue
+import org.scalajs.dom.raw.HTMLElement
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
+import scala.util.control.NonFatal
 
 trait StatefulHostComponent {
   type State <: AnyRef
@@ -17,37 +20,73 @@ trait StatefulHostComponent {
   def effect: Any ⇒ State ⇒ EventStream = _ ⇒ _ ⇒ fs2.Stream.empty
   def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit
 
-  def connectedEffect: Option[Any] = None
-  def adoptedEffect: Option[Any] = None
-  def attributeChangedEffect(name: String, oldValue: String, newValue: String): Option[Any] = None
+  def onStart(componentHost: HTMLElement, eventDispatcher: EventDispatcher): Unit = ()
+  def onStop(componentHost: HTMLElement): Unit = ()
+
+  def eventReducerPipeline(componentHost: HTMLElement, eventDispatcher: EventDispatcher)
+                          (implicit concurrent: Concurrent[IO]): IO[Unit] = {
+    val initState = initialState(attributes.map(attribute ⇒ attribute → componentHost.getAttribute(attribute)))
+    val renderFn = render(componentHost)(eventDispatcher)
+    val events = eventDispatcher.dequeue.takeWhile(event ⇒ event != ComponentDisconnectedEvent, takeFailure = true)
+    onStart(componentHost, eventDispatcher)
+    (for {
+      reducerOutput ← events.scan[(State, Any, Boolean)]((initState, ComponentConnectedEvent, true))((acc, event: Any) ⇒ {
+        val (state, _, _) = acc
+        if (event == ComponentConnectedEvent) acc
+        else {
+          val newState = try {
+            reducer(event)(state)
+          } catch {
+            case NonFatal(err) ⇒
+              err.printStackTrace()
+              state
+          }
+          (newState, event, !(state eq newState))
+        }
+      })
+      (state, event, hasChanged) = reducerOutput
+      renderStream = if (hasChanged) Stream.eval(IO {
+        println(s"Tick, event: $event")
+        renderFn(state)
+      }) else Stream.empty
+      effectStream = Stream.eval(concurrent.start(
+        effect(event)(state).through(eventDispatcher.enqueue).compile.drain
+          .handleErrorWith(err ⇒ IO(err.printStackTrace()))
+      ))
+      _ ← renderStream ++ effectStream
+    } yield ()).compile.drain
+      .map(_ ⇒ onStop(componentHost))
+  }
 
 }
+
+case object ComponentConnectedEvent
+case object ComponentDisconnectedEvent
+case object ComponentAdoptedEvent
+case class ComponentAttributeChangedEvent(name: String, oldValue: String, newValue: String)
 
 abstract class StatefulHostCustomElement[T <: StatefulHostComponent](val webComponent: T) extends HTMLElement {
   implicit val defaultContextShift: ContextShift[IO] = IO.contextShift(global)
 
-  private var eventStream: Option[EventDispatcher] = None
-  private def sendEvent(event: Any): Unit = eventStream.foreach(_.enqueue1(event).unsafeRunSync())
+  private var eventDispatcherOpt: Option[EventDispatcher] = None
+  private def sendEvent(event: Any): Unit = eventDispatcherOpt.foreach(_.enqueue1(event).unsafeRunSync())
 
-
-  def connectedCallback(): Unit = {
-    EventReducerPipeline.run[webComponent.State](
-      webComponent.render(this),
-      webComponent.reducer,
-      webComponent.effect,
-      webComponent.initialState(webComponent.attributes.map(attribute ⇒ attribute → getAttribute(attribute))),
-    ).map(es ⇒ eventStream = Some(es)).unsafeRunAsyncAndForget()
-  }
+  def connectedCallback(): Unit = (for {
+    eventStream ← Queue.unbounded[IO, Any]
+    _ ← webComponent.eventReducerPipeline(this, eventStream)
+  } yield {
+    eventDispatcherOpt = Some(eventStream)
+  }).unsafeRunAsyncAndForget()
 
   def disconnectedCallback(): Unit = {
-    sendEvent(AppStopEvent)
-    eventStream = None
+    sendEvent(ComponentDisconnectedEvent)
+    eventDispatcherOpt = None
   }
 
-  def adoptedCallback(): Unit = sendEvent(webComponent.adoptedEffect)
+  def adoptedCallback(): Unit = sendEvent(ComponentAdoptedEvent)
 
   def attributeChangedCallback(name: String, oldValue: String, newValue: String): Unit = {
-    sendEvent(webComponent.attributeChangedEffect(name, oldValue, newValue))
+    sendEvent(ComponentAttributeChangedEvent(name, oldValue, newValue))
   }
 
 }
