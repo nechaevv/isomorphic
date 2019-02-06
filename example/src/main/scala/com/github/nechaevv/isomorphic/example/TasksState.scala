@@ -5,6 +5,7 @@ import monocle.macros.Lenses
 @Lenses
 case class TasksState
 (
+  route: String,
   tasks: Seq[Task],
   editingIndex: Option[Int],
   editingTask: Task,

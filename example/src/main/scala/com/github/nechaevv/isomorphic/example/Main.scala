@@ -1,6 +1,6 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.{CustomElements, EventDispatcher}
+import com.github.nechaevv.isomorphic.webcomponent.CustomElements
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel

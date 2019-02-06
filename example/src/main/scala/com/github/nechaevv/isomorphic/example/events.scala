@@ -11,3 +11,5 @@ case class TaskSetCompletedEvent(isCompleted: Boolean)
 case class ShowMessage(message: String)
 
 case class TaskDeleteEvent(index: Int)
+
+case object NavigateToDashboard
