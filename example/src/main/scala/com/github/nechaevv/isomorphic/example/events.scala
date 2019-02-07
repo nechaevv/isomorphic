@@ -1,17 +1,31 @@
 package com.github.nechaevv.isomorphic.example
 
-case class TaskSelectEvent(index: Int)
+import com.github.nechaevv.isomorphic.example.model.Hero
 
-case object TaskSaveEvent
+case class HeroesLoadEvent(heroes: Seq[Hero])
 
-case class TaskEditNameEvent(name: String)
+case class NavigateToHeroDetail(heroId: Int)
 
-case class TaskSetCompletedEvent(isCompleted: Boolean)
+case class NewHeroNameChange(name: String)
 
-case class ShowMessage(message: String)
+case object SaveNewHero
 
-case class TaskDeleteEvent(index: Int)
+case class DeleteHero(heroId: Int)
 
 case object NavigateToDashboard
 
+case class HeroDetailLoadEvent(heroDetail: Hero)
+
 case object NavigateToHeroes
+
+case object NavigateBack
+
+case class SearchHeroes(search: String)
+
+case class HeroesSearchResult(result: Seq[Hero])
+
+case class HeroDetailNameChange(name: String)
+
+case object HeroDetailSave
+
+case object ClearMessages

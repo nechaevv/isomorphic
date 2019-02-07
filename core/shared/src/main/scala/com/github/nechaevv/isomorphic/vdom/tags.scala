@@ -8,6 +8,8 @@ object tags {
   val form   = ElementVNode("form")
   val h1     = ElementVNode("h1")
   val h2     = ElementVNode("h2")
+  val h3     = ElementVNode("h3")
+  val h4     = ElementVNode("h4")
   val header = ElementVNode("header")
   val img    = ElementVNode("img")
   val input  = ElementVNode("input")

@@ -8,6 +8,6 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 object Main {
   @JSExportTopLevel("boot")
   def boot(): Unit = {
-    CustomElements.define(TasksApp, js.constructorOf[TasksAppStatefulHostCustomElement])
+    CustomElements.define(HeroesApp, js.constructorOf[TasksAppStatefulHostCustomElement])
   }
 }
