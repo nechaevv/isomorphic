@@ -9,18 +9,18 @@ import com.github.nechaevv.isomorphic.vdom.tags._
 import org.scalajs.dom.raw.HTMLInputElement
 
 object HeroDetailComponent extends Component[HeroDetailState, ElementVNode] {
-  override def apply(state: HeroDetailState): ElementVNode = div(
+  override def apply(state: HeroDetailState): ElementVNode = div(classes += "hero-detail",
     h2(state.hero.name.toUpperCase),
     div(span("id: "), state.hero.id.toString),
     div(
       label("name: ",
-        input('placeholder := "name", DOMEventTypes.Change → nameChangeEventHandler)
+        input('placeholder := "name", 'value := state.heroName, DOMEventTypes.Change → nameChangeEventHandler)
       )
     ),
     button(DOMEventTypes.Click → backEventHandler, "go back"),
     button(DOMEventTypes.Click → saveEventHandler, "save"),
   )
-  val nameChangeEventHandler: EventHandler = e ⇒ fs2.Stream(HeroDetailNameChange(e.asInstanceOf[HTMLInputElement].value))
+  val nameChangeEventHandler: EventHandler = e ⇒ fs2.Stream(HeroDetailNameChange(e.target.asInstanceOf[HTMLInputElement].value))
   val saveEventHandler: EventHandler = e ⇒ fs2.Stream(HeroDetailSave)
   val backEventHandler: EventHandler = e ⇒ fs2.Stream(NavigateBack)
 }

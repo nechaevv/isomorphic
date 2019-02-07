@@ -2,7 +2,7 @@ package com.github.nechaevv.isomorphic.example.components
 
 import cats.effect.IO
 import com.github.nechaevv.isomorphic.example.NavigateToHeroDetail
-import com.github.nechaevv.isomorphic.frontend.EventHandler
+import com.github.nechaevv.isomorphic.vdom.browser.EventHandler
 import org.scalajs.dom.Event
 
 case class NavigateToDetailEventHandler(heroId: Int) extends EventHandler {

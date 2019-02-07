@@ -28,4 +28,6 @@ case class HeroDetailNameChange(name: String)
 
 case object HeroDetailSave
 
+case class AddMessage(message: String)
+
 case object ClearMessages

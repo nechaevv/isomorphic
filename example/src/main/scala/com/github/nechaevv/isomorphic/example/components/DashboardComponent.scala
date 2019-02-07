@@ -7,11 +7,11 @@ import browser._
 import tags._
 
 
-object DashboardComponent extends Component[HeroesAppState, FragmentVNode] {
-  override def apply(state: HeroesAppState): FragmentVNode = fragment(
+object DashboardComponent extends Component[HeroesAppState, ElementVNode] {
+  override def apply(state: HeroesAppState): ElementVNode = div(classes += "dashboard",
     h3("Top heroes"),
     div(classes += "grid grid-pad")(
-      for (hero ← state.heroes.take(4)) yield a('href := "#", classes += "col-1-4", DOMEventTypes.Click → NavigateToDetailEventHandler(hero.id),
+      for (hero ← state.heroes.take(4)) yield a.withKey(hero.id.toString)('href := "#", classes += "col-1-4", DOMEventTypes.Click → NavigateToDetailEventHandler(hero.id),
         div(classes += "module hero",
           h4(hero.name)
         )

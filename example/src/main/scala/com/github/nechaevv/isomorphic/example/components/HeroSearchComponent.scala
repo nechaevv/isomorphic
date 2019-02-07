@@ -9,11 +9,11 @@ import com.github.nechaevv.isomorphic.vdom.tags._
 import org.scalajs.dom.raw.HTMLInputElement
 
 object HeroSearchComponent extends Component[HeroSearchState, ElementVNode] {
-  override def apply(searchState: HeroSearchState): ElementVNode = div(
+  override def apply(searchState: HeroSearchState): ElementVNode = div(classes += "hero-search",
     h4("Hero Search"),
     input('value := searchState.searchBox , DOMEventTypes.Input → searchInputEventHandler),
     ul(classes += "search-result",
-      for(hero ← searchState.searchResults) yield li(
+      for(hero ← searchState.searchResults) yield li.withKey(hero.id.toString)(
         a('href := "#", DOMEventTypes.Click → NavigateToDetailEventHandler(hero.id), hero.name)
       )
     )

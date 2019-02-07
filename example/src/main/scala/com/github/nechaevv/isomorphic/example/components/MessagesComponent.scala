@@ -7,7 +7,7 @@ import com.github.nechaevv.isomorphic.vdom.browser._
 import com.github.nechaevv.isomorphic.vdom.tags._
 
 object MessagesComponent extends Component[Seq[String], FragmentVNode] {
-  override def apply(messages: Seq[String]): FragmentVNode = if (messages.nonEmpty) Some(div(
+  override def apply(messages: Seq[String]): FragmentVNode = if (messages.nonEmpty) Some(div(classes += "messages",
     h2("Messages"),
     button(classes += "clear", DOMEventTypes.Click → clearEventHandler, "clear"),
     for (msg ← messages) yield div(msg)

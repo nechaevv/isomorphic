@@ -16,11 +16,8 @@ object AppReducers {
     case HeroDetailLoadEvent(hero) ⇒ HeroesAppState.detail.set(Some(HeroDetailState(hero, hero.name)))
     case HeroDetailNameChange(name) ⇒ detailLens.composeLens(HeroDetailState.heroName).set(name)
     case HeroesSearchResult(searchResult) ⇒ (HeroesAppState.search composeLens HeroSearchState.searchResults).set(searchResult)
+    case AddMessage(message) ⇒ HeroesAppState.messages.modify(messages ⇒ message +: messages)
     case ClearMessages ⇒ HeroesAppState.messages.set(Nil)
-    case SaveNewHero ⇒ s ⇒ s.copy(
-      heroes = s.heroes :+ Hero(s.heroes.map(_.id).max, s.newHeroName),
-      newHeroName = ""
-    )
   }
 
 }

@@ -10,8 +10,8 @@ import com.github.nechaevv.isomorphic.vdom.tags._
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement
 
-object HeroesComponent extends Component[HeroesAppState, FragmentVNode] {
-  override def apply(state: HeroesAppState): FragmentVNode = fragment(
+object HeroesComponent extends Component[HeroesAppState, ElementVNode] {
+  override def apply(state: HeroesAppState): ElementVNode = div(classes += "heroes-list",
     h2("My Heroes"),
     div(
       label("Hero name: ",
@@ -20,7 +20,7 @@ object HeroesComponent extends Component[HeroesAppState, FragmentVNode] {
       button(DOMEventTypes.Click → saveEventHandler, "add")
     ),
     ul(classes += "heroes",
-      for (hero ← state.heroes) yield li(
+      for (hero ← state.heroes) yield li.withKey(hero.id.toString)(
         a('href := "#", DOMEventTypes.Click → NavigateToDetailEventHandler(hero.id),
           span(classes += "badge", hero.id.toString),
           hero.name
@@ -29,7 +29,7 @@ object HeroesComponent extends Component[HeroesAppState, FragmentVNode] {
       )
     )
   )
-  val nameChangeEventHandler: EventHandler = e ⇒ fs2.Stream(NewHeroNameChange(e.asInstanceOf[HTMLInputElement].value))
+  val nameChangeEventHandler: EventHandler = e ⇒ fs2.Stream(NewHeroNameChange(e.target.asInstanceOf[HTMLInputElement].value))
   val saveEventHandler: EventHandler = e ⇒ fs2.Stream(SaveNewHero)
   case class DeleteEventHandler(heroId: Int) extends EventHandler {
     override def apply(e: Event): fs2.Stream[IO, Any] = fs2.Stream(DeleteHero(heroId))

@@ -1,11 +1,10 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.AutonomousCustomElement
+import com.github.nechaevv.isomorphic.{AutonomousCustomElement, EventStream, combineEffects, combineReducers}
 import com.github.nechaevv.isomorphic.example.components.AppComponent
 import com.github.nechaevv.isomorphic.example.model.{HeroSearchState, HeroesAppState}
 import com.github.nechaevv.isomorphic.router.{Router, RouterSupport}
 import com.github.nechaevv.isomorphic.webcomponent.{DomReconcilerRender, StatefulHostComponent, StatefulHostElementDelegate}
-import com.github.nechaevv.isomorphic.combineReducers
 import org.scalajs.dom.raw.HTMLElement
 
 object HeroesApp extends StatefulHostComponent with AutonomousCustomElement with DomReconcilerRender {
@@ -31,6 +30,6 @@ object HeroesApp extends StatefulHostComponent with AutonomousCustomElement with
 
   override val reducer: Any ⇒ HeroesAppState ⇒ HeroesAppState = combineReducers(AppReducers.reducer)
 
-  override def effect = appEffect
+  override def effect: Any ⇒ HeroesAppState ⇒ EventStream = combineEffects(AppEffects.effect)
 
 }
