@@ -1,6 +1,6 @@
 package com.github.nechaevv.isomorphic.example
 
-import com.github.nechaevv.isomorphic.{AutonomousCustomElement, EventStream, combineEffects, combineReducers}
+import com.github.nechaevv.isomorphic.{AutonomousCustomElement, ActionStream, combineEffects, combineReducers}
 import com.github.nechaevv.isomorphic.example.components.AppComponent
 import com.github.nechaevv.isomorphic.example.model.{HeroSearchState, HeroesAppState}
 import com.github.nechaevv.isomorphic.router.{Router, RouterSupport}
@@ -30,6 +30,6 @@ object HeroesApp extends StatefulHostComponent with AutonomousCustomElement with
 
   override val reducer: Any ⇒ HeroesAppState ⇒ HeroesAppState = combineReducers(AppReducers.reducer)
 
-  override def effect: Any ⇒ HeroesAppState ⇒ EventStream = combineEffects(AppEffects.effect)
+  override def effect: Any ⇒ HeroesAppState ⇒ ActionStream = combineEffects(AppEffects.effect)
 
 }

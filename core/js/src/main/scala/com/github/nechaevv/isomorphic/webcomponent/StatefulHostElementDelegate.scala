@@ -1,12 +1,13 @@
 package com.github.nechaevv.isomorphic.webcomponent
 
 import cats.effect.{Concurrent, ContextShift, IO}
-import com.github.nechaevv.isomorphic.EventDispatcher
+import com.github.nechaevv.isomorphic.ActionDispatcher
 import fs2.Stream
 import fs2.concurrent.Queue
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.scalajs.js
 import scala.util.control.NonFatal
 
 class StatefulHostElementDelegate(statefulHostComponent: StatefulHostComponent,
@@ -14,9 +15,9 @@ class StatefulHostElementDelegate(statefulHostComponent: StatefulHostComponent,
 
   implicit val defaultContextShift: ContextShift[IO] = IO.contextShift(global)
 
-  protected val eventDispatcher: EventDispatcher = Queue.unbounded[IO, Any].unsafeRunSync()
+  protected val actionDispatcher: ActionDispatcher = Queue.unbounded[IO, Any].unsafeRunSync()
 
-  protected def sendEvent(event: Any): Unit = eventDispatcher.enqueue1(event).unsafeRunSync()
+  protected def sendEvent(event: Any): Unit = actionDispatcher.enqueue1(event).unsafeRunSync()
 
   override def connectedCallback(): Unit = eventReducerPipeline().unsafeRunAsyncAndForget()
 
@@ -31,8 +32,8 @@ class StatefulHostElementDelegate(statefulHostComponent: StatefulHostComponent,
   protected def eventReducerPipeline()(implicit concurrent: Concurrent[IO]): IO[Unit] = {
     val initState = statefulHostComponent.initialState(statefulHostComponent.attributes
       .map(attribute ⇒ attribute → componentHost.getAttribute(attribute)))
-    val renderFn = statefulHostComponent.render(componentHost)(eventDispatcher)
-    val events = eventDispatcher.dequeue.takeWhile(event ⇒ event != ComponentDisconnectedEvent, takeFailure = true)
+    val renderFn = statefulHostComponent.render(componentHost)(actionDispatcher)
+    val events = actionDispatcher.dequeue.takeWhile(event ⇒ event != ComponentDisconnectedEvent, takeFailure = true)
     (for {
       reducerOutput ← events.scan[(statefulHostComponent.State, Any, Boolean)]((initState, ComponentConnectedEvent, true))((acc, event: Any) ⇒ {
         val (state, _, _) = acc
@@ -54,11 +55,18 @@ class StatefulHostElementDelegate(statefulHostComponent: StatefulHostComponent,
         renderFn(state)
       }) else Stream.empty
       effectStream = Stream.eval(concurrent.start(
-        statefulHostComponent.effect(event)(state).through(eventDispatcher.enqueue).compile.drain
+        statefulHostComponent.effect(event)(state).through(actionDispatcher.enqueue).compile.drain
           .handleErrorWith(err ⇒ IO(err.printStackTrace()))
       ))
       _ ← renderStream ++ effectStream
     } yield ()).compile.drain
+
+  }
+
+  protected var scheduledRenderTask: Option[js.Function0[Unit]] = None
+
+  protected def scheduleRender(state: statefulHostComponent.State, render: statefulHostComponent.State ⇒ Unit): Unit = {
+
   }
 
 }

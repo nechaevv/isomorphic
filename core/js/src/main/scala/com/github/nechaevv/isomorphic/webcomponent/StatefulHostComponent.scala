@@ -13,8 +13,8 @@ trait StatefulHostComponent {
   def attributes: Iterable[String] = Seq.empty
   def initialState(properties: Iterable[(String, String)]): State
   def reducer: Any ⇒ State ⇒ State = _ ⇒ s ⇒ s
-  def effect: Any ⇒ State ⇒ EventStream = _ ⇒ _ ⇒ fs2.Stream.empty
-  def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit
+  def effect: Any ⇒ State ⇒ ActionStream = _ ⇒ _ ⇒ fs2.Stream.empty
+  def render(componentHost: HTMLElement): ActionDispatcher ⇒ State ⇒ Unit
   def customElementDelegate(componentHost: HTMLElement): StatefulHostElementDelegate = {
     new StatefulHostElementDelegate(this, componentHost)
   }
@@ -29,9 +29,9 @@ case class ComponentAttributeChangedEvent(name: String, oldValue: String, newVal
 trait ReactRender { this: StatefulHostComponent ⇒
   def rootComponent: State ⇒ Element
 
-  override def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit = {
-    eventDispatcher: EventDispatcher ⇒ state: State ⇒ {
-      val vdom = rootComponent(state)(new ReactRenderer(eventDispatcher))
+  override def render(componentHost: HTMLElement): ActionDispatcher ⇒ State ⇒ Unit = {
+    actionDispatcher ⇒ state ⇒ {
+      val vdom = rootComponent(state)(new ReactRenderer(actionDispatcher))
       ReactDOM.render(vdom, componentHost)
     }
   }
@@ -40,9 +40,10 @@ trait ReactRender { this: StatefulHostComponent ⇒
 trait DomReconcilerRender { this: StatefulHostComponent ⇒
   def rootComponent: vdom.Component[State, FragmentVNode]
 
-  override def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit = {
-    eventDispatcher ⇒ state ⇒ {
-      DomReconciler.reconcileRootComponent(componentHost, ComponentVNode(rootComponent, state), eventDispatcher)
+  override def render(componentHost: HTMLElement): ActionDispatcher ⇒ State ⇒ Unit = {
+    actionDispatcher ⇒ state ⇒ {
+      val vdom = ComponentVNode(rootComponent, state)
+      DomReconciler.reconcileRootComponent(componentHost, vdom, actionDispatcher)
     }
   }
 }
@@ -50,11 +51,12 @@ trait DomReconcilerRender { this: StatefulHostComponent ⇒
 trait ShadowDomReconcilerRender { this: StatefulHostComponent ⇒
   def rootComponent: vdom.Component[State, FragmentVNode]
   def isOpen: Boolean = false
-  override def render(componentHost: HTMLElement): EventDispatcher ⇒ State ⇒ Unit = {
+  override def render(componentHost: HTMLElement): ActionDispatcher ⇒ State ⇒ Unit = {
     val shadowRoot = componentHost.asInstanceOf[HTMLElementWithShadowRoot]
       .attachShadow(js.Dynamic.literal("mode" → (if (isOpen) "open" else "closed")))
-    eventDispatcher ⇒ state ⇒ {
-      DomReconciler.reconcileRootComponent(shadowRoot, ComponentVNode(rootComponent, state), eventDispatcher)
+    actionDispatcher ⇒ state ⇒ {
+      val vdom = ComponentVNode(rootComponent, state)
+      DomReconciler.reconcileRootComponent(shadowRoot, vdom, actionDispatcher)
     }
   }
 }

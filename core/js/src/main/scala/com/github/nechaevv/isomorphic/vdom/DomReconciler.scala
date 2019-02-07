@@ -1,6 +1,6 @@
 package com.github.nechaevv.isomorphic.vdom
 
-import com.github.nechaevv.isomorphic.EventDispatcher
+import com.github.nechaevv.isomorphic.ActionDispatcher
 import com.github.nechaevv.isomorphic.api.WeakMap
 import org.scalajs.dom.document
 import org.scalajs.dom.raw._
@@ -24,11 +24,11 @@ object DomReconciler {
   case class FragmentRepr(children: Seq[VNode], key: String) extends VNodeRepr
   case class TextRepr(text:String, key: String) extends VNodeRepr
 
-  def reconcileRootComponent[S](rootElement: Node with ParentNode, vdomComp: ComponentVNode[S, FragmentVNode], eventDispatcher: EventDispatcher): Unit = {
+  def reconcileRootComponent[S](rootElement: Node with ParentNode, vdomComp: ComponentVNode[S, FragmentVNode], eventDispatcher: ActionDispatcher): Unit = {
     val vdomComponentCurr = rootVDom.get(rootElement).toOption.asInstanceOf[Option[ComponentVNode[S, FragmentVNode]]]
     val (vdom, vdomCurr) = evalComponent(vdomComp, vdomComponentCurr)
     if (!vdomCurr.exists(_ eq vdom)) {
-      reconcileNodeSeq(vdomCurr.map(_.children).getOrElse(Nil), vdom.children, 0, rootElement, eventDispatcher)
+      reconcileNodeSeq(vdomCurr.map(_.children).getOrElse(Nil), vdom.children, None, rootElement, eventDispatcher)
       rootVDom.set(rootElement, vdomComp.asInstanceOf[ComponentVNode[Any, FragmentVNode]])
     }
   }
@@ -56,7 +56,7 @@ object DomReconciler {
     case _ ⇒ (vnode, vnodeCurr)
   }
 
-  private def addEventListener(listener: VNodeEventListener, elem: Element, eventDispatcher: EventDispatcher): Unit = {
+  private def addEventListener(listener: VNodeEventListener, elem: Element, eventDispatcher: ActionDispatcher): Unit = {
     val eventListenerFn: js.Function1[Event, Unit] = e ⇒ listener.handler(e)
       .through(eventDispatcher.enqueue).compile.drain.unsafeRunAsyncAndForget()
     listenerMapping.set(listener, eventListenerFn)
@@ -101,9 +101,9 @@ object DomReconciler {
     }
   }
 
-  private def reconcileNode(vnode: VNode, nodeIndex: Int, offset: Int, container: Node with ParentNode, key: String,
-                            matchingNodeOpt: Option[(VNode, VNodeRepr)], eventDispatcher: EventDispatcher): Int = {
-    val containerIndex = offset + nodeIndex
+  private def reconcileNode(vnode: VNode, nodeIndex: Int, offset: Option[Int], container: Node with ParentNode, key: String,
+                            matchingNodeOpt: Option[(VNode, VNodeRepr)], eventDispatcher: ActionDispatcher): Int = {
+    val containerIndex = offset.getOrElse(0) + nodeIndex
     val (node, vnodeRepr, nodeCount) = vnode match {
       case _: ComponentVNode[_, _] ⇒ throw new RuntimeException("Component node not expected")
       case tn @ ElementVNode(name, modifiers, _) ⇒
@@ -133,7 +133,7 @@ object DomReconciler {
               println(s"-listener($name,${lsn.eventType.name})")
               elem.removeEventListener(lsn.eventType.name.toLowerCase, listenerMapping.get(lsn).get, lsn.eventType.isCapturing)
             }
-            reconcileNodeSeq(tagReprCurr.children, children, 0, elem, eventDispatcher)
+            reconcileNodeSeq(tagReprCurr.children, children, None, elem, eventDispatcher)
             (elem, ElementRepr(name, attributes, listeners, children, key), 1)
           }
         }).getOrElse({
@@ -142,7 +142,7 @@ object DomReconciler {
           val (attributes, listeners, children) = elementProperties(modifiers)
           for ((k, v) ← attributes) elem.setAttribute(k, v)
           for (lsn ← listeners) addEventListener(lsn, elem, eventDispatcher)
-          reconcileNodeSeq(Nil, children, 0, elem, eventDispatcher)
+          reconcileNodeSeq(Nil, children, None, elem, eventDispatcher)
           (elem, ElementRepr(name, attributes, listeners, children, key), 1)
         })
 
@@ -152,12 +152,12 @@ object DomReconciler {
         } yield {
           if (fragNode eq fn) (container, fragNodeRepr, fragNodeRepr.children.length)
           else {
-            val nodeCount = reconcileNodeSeq(fragNode.children, children, containerIndex, container, eventDispatcher)
+            val nodeCount = reconcileNodeSeq(fragNode.children, children, Some(containerIndex), container, eventDispatcher)
             (container, FragmentRepr(children, key), nodeCount)
           }
         }).getOrElse({
           println("+$fragment")
-          val nodeCount = reconcileNodeSeq(Nil, children, containerIndex, container, eventDispatcher)
+          val nodeCount = reconcileNodeSeq(Nil, children, Some(containerIndex), container, eventDispatcher)
           (container, FragmentRepr(children, key), nodeCount)
         })
 
@@ -193,8 +193,8 @@ object DomReconciler {
     nodeCount
   }
 
-  private def reconcileNodeSeq(currentVDom: Seq[VNode], vdom: Seq[VNode], offset: Int, container: Node with ParentNode,
-                               eventDispatcher: EventDispatcher): Int = {
+  private def reconcileNodeSeq(currentVDom: Seq[VNode], vdom: Seq[VNode], offset: Option[Int], container: Node with ParentNode,
+                               eventDispatcher: ActionDispatcher): Int = {
     var auxId = 0
     def nodeKey(n: VNode) = n.key.getOrElse({ auxId += 1; "$" + auxId.toString})
     val vdomCurrMap = currentVDom.map(ni ⇒ nodeKey(ni) → ni).toMap
@@ -213,7 +213,7 @@ object DomReconciler {
       index += nodeCount
     }
 
-    if (offset == 0) {
+    if (offset.isEmpty) {
       for (i ← index until container.childElementCount) {
         println("-")
         container.removeChild(container.lastChild)

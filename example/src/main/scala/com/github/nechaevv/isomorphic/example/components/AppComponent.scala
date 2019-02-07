@@ -16,12 +16,12 @@ object AppComponent extends Component[HeroesAppState, FragmentVNode] {
       a('href := "#", DOMEventTypes.Click → goHeroesEventHandler, "Heroes"),
     ),
     state.route match {
-      case dashboardRoute(_*) ⇒ Some(DashboardComponent(state))
-      case heroesRoute(_*) ⇒ Some(HeroesComponent(state))
-      case detailRoute(_*) ⇒ state.detail.map(HeroDetailComponent(_))
+      case dashboardRoute(_*) ⇒ Some(DashboardComponent << state)
+      case heroesRoute(_*) ⇒ Some(HeroesComponent << state)
+      case detailRoute(_*) ⇒ state.detail.map(HeroDetailComponent << _)
       case _ ⇒ None
     },
-    MessagesComponent(state.messages)
+    MessagesComponent << state.messages
   )
 
   val dashboardRoute: Regex = "^/dashboard$".r
