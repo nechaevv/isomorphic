@@ -1,4 +1,4 @@
-package com.github.nechaevv.isomorphic.frontend
+package com.github.nechaevv.isomorphic.vdom
 
 case class DOMEventType(name: String, isCapturing: Boolean = false)
 

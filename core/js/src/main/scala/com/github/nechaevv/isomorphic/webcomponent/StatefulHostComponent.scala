@@ -25,7 +25,7 @@ case object ComponentConnectedEvent
 case object ComponentDisconnectedEvent
 case object ComponentAdoptedEvent
 case class ComponentAttributeChangedEvent(name: String, oldValue: String, newValue: String)
-
+/*
 trait ReactRender { this: StatefulHostComponent ⇒
   def rootComponent: State ⇒ Element
 
@@ -36,6 +36,7 @@ trait ReactRender { this: StatefulHostComponent ⇒
     }
   }
 }
+*/
 
 trait DomReconcilerRender { this: StatefulHostComponent ⇒
   def rootComponent: vdom.Component[State, FragmentVNode]

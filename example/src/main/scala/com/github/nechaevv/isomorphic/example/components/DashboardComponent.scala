@@ -2,7 +2,6 @@ package com.github.nechaevv.isomorphic.example.components
 
 import com.github.nechaevv.isomorphic.example.model.HeroesAppState
 import com.github.nechaevv.isomorphic.vdom._
-import com.github.nechaevv.isomorphic.frontend.DOMEventTypes
 import browser._
 import tags._
 

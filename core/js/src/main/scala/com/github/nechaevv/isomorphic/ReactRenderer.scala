@@ -1,5 +1,6 @@
 package com.github.nechaevv.isomorphic
 
+/*
 import api.{React, ReactElement}
 import frontend._
 import org.scalajs.dom.Event
@@ -44,3 +45,4 @@ class ReactRenderer(eventStream: ActionDispatcher) extends Renderer[ReactElement
   }
 
 }
+*/

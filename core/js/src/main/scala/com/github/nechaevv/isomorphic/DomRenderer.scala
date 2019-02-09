@@ -1,6 +1,8 @@
 package com.github.nechaevv.isomorphic
 
-import com.github.nechaevv.isomorphic.frontend._
+/*
+
+import com.github.nechaevv.isomorphic.browser._
 import org.scalajs.dom.{Event, Node, document}
 
 class DomRenderer(eventStream: ActionDispatcher)  extends Renderer[Node] {
@@ -30,3 +32,5 @@ class DomRenderer(eventStream: ActionDispatcher)  extends Renderer[Node] {
   override def text(content: String): Node = document.createTextNode(content)
 
 }
+
+*/

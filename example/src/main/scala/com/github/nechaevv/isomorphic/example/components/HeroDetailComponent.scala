@@ -2,7 +2,6 @@ package com.github.nechaevv.isomorphic.example.components
 
 import com.github.nechaevv.isomorphic.example.model.HeroDetailState
 import com.github.nechaevv.isomorphic.example.{HeroDetailNameChange, HeroDetailSave, NavigateBack}
-import com.github.nechaevv.isomorphic.frontend.DOMEventTypes
 import com.github.nechaevv.isomorphic.vdom._
 import com.github.nechaevv.isomorphic.vdom.browser._
 import com.github.nechaevv.isomorphic.vdom.tags._

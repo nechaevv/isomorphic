@@ -35,7 +35,7 @@ object DomReconciler {
 
   def evalComponent[S, N <: VNode](vnode: ComponentVNode[S, N], vnodeCurrOpt: Option[ComponentVNode[S, N]]): (N, Option[N]) = {
     (for {
-      vnodeCurr ← vnodeCurrOpt
+      vnodeCurr ← vnodeCurrOpt if vnodeCurr.component == vnode.component
       cached ← componentCache.get(vnodeCurr.asInstanceOf[ComponentVNode[Any, VNode]]).toOption
     } yield (cached.asInstanceOf[N], vnodeCurr.state)) match {
       case Some((cached, prevState)) if prevState == vnode.state ⇒
