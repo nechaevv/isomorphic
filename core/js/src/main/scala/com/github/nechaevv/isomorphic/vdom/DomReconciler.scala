@@ -25,6 +25,7 @@ object DomReconciler {
   case class TextRepr(text:String, key: String) extends VNodeRepr
 
   def reconcileRootComponent[S](rootElement: Node with ParentNode, vdomComp: ComponentVNode[S, FragmentVNode], eventDispatcher: ActionDispatcher): Unit = {
+    println("Render")
     val vdomComponentCurr = rootVDom.get(rootElement).toOption.asInstanceOf[Option[ComponentVNode[S, FragmentVNode]]]
     val (vdom, vdomCurr) = evalComponent(vdomComp, vdomComponentCurr)
     if (!vdomCurr.exists(_ eq vdom)) {
@@ -146,19 +147,16 @@ object DomReconciler {
           (elem, ElementRepr(name, attributes, listeners, children, key), 1)
         })
 
-      case fn @ FragmentVNode(children, _) ⇒
+      case fn: FragmentVNode ⇒
         (for {
           (fragNode: FragmentVNode, fragNodeRepr: FragmentRepr) ← matchingNodeOpt
         } yield {
-          if (fragNode eq fn) (container, fragNodeRepr, fragNodeRepr.children.length)
-          else {
-            val nodeCount = reconcileNodeSeq(fragNode.children, children, Some(containerIndex), container, eventDispatcher)
-            (container, FragmentRepr(children, key), nodeCount)
-          }
+          val nodeCount = reconcileNodeSeq(fragNode.children, fn.children, Some(containerIndex), container, eventDispatcher)
+          (container, FragmentRepr(fn.children, key), nodeCount)
         }).getOrElse({
           println("+$fragment")
-          val nodeCount = reconcileNodeSeq(Nil, children, Some(containerIndex), container, eventDispatcher)
-          (container, FragmentRepr(children, key), nodeCount)
+          val nodeCount = reconcileNodeSeq(Nil, fn.children, Some(containerIndex), container, eventDispatcher)
+          (container, FragmentRepr(fn.children, key), nodeCount)
         })
 
       case TextVNode(text) ⇒
@@ -180,9 +178,9 @@ object DomReconciler {
     }
 
     nodeReprCache.set(vnode, vnodeRepr)
-    elementMapping.set(vnodeRepr, node)
 
-    if (!node.eq(container)) {
+    if (!vnode.isInstanceOf[FragmentVNode]) {
+      elementMapping.set(vnodeRepr, node)
       if (containerIndex >= container.childElementCount) container.appendChild(node)
       else {
         val existingNode = container.childNodes(containerIndex)

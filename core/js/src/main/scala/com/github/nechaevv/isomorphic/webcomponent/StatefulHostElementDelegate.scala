@@ -4,14 +4,14 @@ import cats.effect.{Concurrent, ContextShift, IO}
 import com.github.nechaevv.isomorphic.ActionDispatcher
 import fs2.Stream
 import fs2.concurrent.Queue
+import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.scalajs.js
 import scala.util.control.NonFatal
 
-class StatefulHostElementDelegate(statefulHostComponent: StatefulHostComponent,
-                                  componentHost: HTMLElement) extends CustomElementDelegate {
+class StatefulHostElementDelegate(protected val statefulHostComponent: StatefulHostComponent,
+                                  protected val componentHost: HTMLElement) extends CustomElementDelegate {
 
   implicit val defaultContextShift: ContextShift[IO] = IO.contextShift(global)
 
@@ -52,7 +52,11 @@ class StatefulHostElementDelegate(statefulHostComponent: StatefulHostComponent,
       (state, event, hasChanged) = reducerOutput
       renderStream = if (hasChanged) Stream.eval(IO {
         println(s"Tick, event: $event")
-        renderFn(state)
+        if (scheduledRenderState.isEmpty) dom.window.requestAnimationFrame(_ ⇒ scheduledRenderState.foreach(s ⇒ {
+          renderFn(s)
+          scheduledRenderState = None
+        }))
+        scheduledRenderState = Some(state)
       }) else Stream.empty
       effectStream = Stream.eval(concurrent.start(
         statefulHostComponent.effect(event)(state).through(actionDispatcher.enqueue).compile.drain
@@ -60,13 +64,8 @@ class StatefulHostElementDelegate(statefulHostComponent: StatefulHostComponent,
       ))
       _ ← renderStream ++ effectStream
     } yield ()).compile.drain
-
   }
 
-  protected var scheduledRenderTask: Option[js.Function0[Unit]] = None
-
-  protected def scheduleRender(state: statefulHostComponent.State, render: statefulHostComponent.State ⇒ Unit): Unit = {
-
-  }
+  protected var scheduledRenderState: Option[statefulHostComponent.State] = None
 
 }

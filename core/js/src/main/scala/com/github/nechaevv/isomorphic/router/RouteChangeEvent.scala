@@ -1,3 +1,3 @@
 package com.github.nechaevv.isomorphic.router
 
-case class RouteChangeEvent(route: String)
+case class RouteChangeEvent(route: Route)

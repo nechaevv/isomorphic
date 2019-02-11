@@ -6,7 +6,9 @@ import org.scalajs.dom.Event
 
 trait RouterSupport extends StatefulHostElementDelegate {
 
-  val popStateListener: Event ⇒ Unit = event ⇒ this.sendEvent(RouteChangeEvent(dom.window.location.pathname))
+  val popStateListener: Event ⇒ Unit = event ⇒ this.sendEvent(
+    RouteChangeEvent(Router.parseLocation(dom.window.location))
+  )
 
   abstract override def connectedCallback(): Unit = {
     super.connectedCallback()

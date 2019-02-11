@@ -7,8 +7,9 @@ val sharedSettings = Seq(
   scalaVersion := "2.12.8"
 )
 
-val reactVersion   = "16.5.0"
-val circeVersion   = "0.9.3"
+val catsVersion    = "1.2.0"
+val fs2Version     = "1.0.3"
+val circeVersion   = "0.11.1"
 val monocleVersion = "1.5.1-cats"
 
 lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
@@ -16,19 +17,18 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
   .settings(sharedSettings)
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "co.fs2"        %% "fs2-core"    % "1.0.0",
-      "org.typelevel" %% "cats-effect" % "1.0.0",
+      "co.fs2"        %% "fs2-core"    % fs2Version,
+      "org.typelevel" %% "cats-effect" % catsVersion,
     )
   )
   .jsSettings(
     libraryDependencies ++= Seq(
-      "org.scala-js"  %%% "scalajs-dom"  % "0.9.5",
-      "co.fs2"        %%% "fs2-core"     % "1.0.0",
-      "org.typelevel" %%% "cats-effect"  % "1.0.0",
+      "org.scala-js"  %%% "scalajs-dom"  % "0.9.6",
+      "co.fs2"        %%% "fs2-core"     % fs2Version,
+      "org.typelevel" %%% "cats-effect"  % catsVersion,
       "io.circe"      %%% "circe-core"   % circeVersion,
       "io.circe"      %%% "circe-parser" % circeVersion
     ),
-    npmDependencies in Compile ++= Seq("react" → reactVersion, "react-dom" → reactVersion),
     scalacOptions ++= Seq("-P:scalajs:sjsDefinedByDefault", "-feature", "-deprecation"),
   )
   .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))

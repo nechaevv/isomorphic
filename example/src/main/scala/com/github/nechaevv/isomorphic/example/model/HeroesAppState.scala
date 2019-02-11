@@ -1,11 +1,12 @@
 package com.github.nechaevv.isomorphic.example.model
 
+import com.github.nechaevv.isomorphic.router.Route
 import monocle.macros.Lenses
 
 @Lenses
 case class HeroesAppState
 (
-  route: String,
+  route: Route,
   heroes: Seq[Hero],
   detail: Option[HeroDetailState],
   search: HeroSearchState,
