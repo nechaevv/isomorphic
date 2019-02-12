@@ -28,10 +28,13 @@ module.exports = {
         }
       ]
     }, {
-      test: /\.(png|svg|jpg|gif)$/,
-      use: [
-        'file-loader'
-      ]
+      test: /\.(png|svg|jpg|gif|ico)$/,
+      use: [{
+        loader: 'file-loader',
+        options: {
+          context: path.resolve(__dirname, 'src', 'main', 'assets')
+        }
+      } ]
     } ]
   },
   plugins: [
@@ -41,8 +44,8 @@ module.exports = {
   ],
   resolve: {
     alias: {
-      "target": path.resolve(__dirname, "target"),
-      "src": path.resolve(__dirname, "src")
+      "target": path.resolve(__dirname, 'target'),
+      "src": path.resolve(__dirname, 'src')
     }
   }
 };
