@@ -4,9 +4,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
-  entry: {
-    "example": ["./src/main/js/boot.js"]
-  },
   module: {
 
     rules: [{

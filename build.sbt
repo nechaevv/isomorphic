@@ -31,7 +31,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("core"))
     ),
     scalacOptions ++= Seq("-P:scalajs:sjsDefinedByDefault", "-feature", "-deprecation"),
   )
-  .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
 
 lazy val example = project.in(file("example"))
   .enablePlugins(ScalaJSPlugin)
