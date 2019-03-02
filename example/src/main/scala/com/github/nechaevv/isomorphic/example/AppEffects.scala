@@ -15,15 +15,15 @@ object AppEffects {
 
   val effect: Effect[HeroesAppState] = {
     case ComponentConnectedEvent ⇒ s ⇒ {
-      (if (s.route.path == "/") Router.navigate(Route("/dashboard")) else fs2.Stream.empty) ++
+      (if (s.route.path == "/") Router.navigateRouteEffect(Route("/dashboard")) else fs2.Stream.empty) ++
       HeroesRepository.getHeroes().map(HeroesLoadEvent)
     }
     case RouteChangeEvent(Route(detailRoute(heroIdStr), _, _)) ⇒ s ⇒ HeroesRepository.getHero(heroIdStr.toInt)
       .map(HeroDetailLoadEvent)
-    case NavigateToDashboard ⇒ _ ⇒ Router.navigate(Route("/dashboard"))
-    case NavigateToHeroes ⇒ _ ⇒ Router.navigate(Route("/heroes"))
-    case NavigateToHeroDetail(heroId) ⇒ _ ⇒ Router.navigate(Route(s"/detail/$heroId"))
-    case NavigateBack ⇒ _ ⇒ Router.back()
+    case NavigateToDashboard ⇒ _ ⇒ Router.navigateRouteEffect(Route("/dashboard"))
+    case NavigateToHeroes ⇒ _ ⇒ Router.navigateRouteEffect(Route("/heroes"))
+    case NavigateToHeroDetail(heroId) ⇒ _ ⇒ Router.navigateRouteEffect(Route(s"/detail/$heroId"))
+    case NavigateBack ⇒ _ ⇒ Router.navigateBackEffect()
     case SearchHeroes(search) ⇒ s ⇒ fs2.Stream(if (search.length > 2) {
       fs2.Stream.eval(HeroesRepository.searchHeroes(search)) ++
         fs2.Stream(AddMessage(s"""found heroes matching "$search""""))
@@ -35,7 +35,7 @@ object AppEffects {
       fs2.Stream.eval(HeroesRepository.saveHero(detailState.hero.id, detailState.heroName))
         .flatMap(newHero ⇒ fs2.Stream.eval(HeroesRepository.getHeroes().map(HeroesLoadEvent)) ++
         fs2.Stream(AddMessage(s"updated hero id=${newHero.id}")) ++
-          Router.back()))
+          Router.navigateBackEffect()))
     case DeleteHero(id) ⇒ s => fs2.Stream.eval(HeroesRepository.deleteHero(id).flatMap(_ ⇒ HeroesRepository.getHeroes()
       .map(HeroesLoadEvent))) ++ fs2.Stream(AddMessage(s"deleted hero id=$id"))
   }

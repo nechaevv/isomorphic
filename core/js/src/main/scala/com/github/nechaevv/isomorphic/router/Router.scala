@@ -9,12 +9,12 @@ object Router {
 
   def currentRoute: Route = parseLocation(dom.window.location)
 
-  def navigate(route: Route): fs2.Stream[fs2.Pure, Any] = {
+  def navigateRouteEffect(route: Route): fs2.Stream[fs2.Pure, Any] = {
     dom.window.history.pushState(js.undefined, "", route.toUrlString)
     fs2.Stream(RouteChangeEvent(route))
   }
 
-  def back(): fs2.Stream[fs2.Pure, Any] = {
+  def navigateBackEffect(): fs2.Stream[fs2.Pure, Any] = {
     dom.window.history.back()
     fs2.Stream(RouteChangeEvent(currentRoute))
   }
