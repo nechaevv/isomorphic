@@ -47,9 +47,9 @@ lazy val example = project.in(file("example"))
     scalacOptions ++= Seq("-P:scalajs:sjsDefinedByDefault", "-feature", "-deprecation"),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     scalaJSOutputMode := OutputMode.ECMAScript6,
-    scalaJSModuleKind := ModuleKind.CommonJSModule,
-    scalaJSLinkerConfig := scalaJSLinkerConfig.value.withRelativizeSourceMapBase(
-      Some((artifactPath in (Compile, fastOptJS)).value.toURI))
-  ))
+    scalaJSLinkerConfig := scalaJSLinkerConfig.value
+        .withModuleKind(ModuleKind.ESModule)
+        .withRelativizeSourceMapBase(Some((artifactPath in (Compile, fastOptJS)).value.toURI)) 
+  ) )
   .dependsOn(core.js)
 
